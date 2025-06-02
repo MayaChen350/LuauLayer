@@ -1,0 +1,53 @@
+package evo
+
+import net.hollowcube.luau.compiler.LuauCompiler
+
+
+fun main(args: Array<String>) {
+    val state = LGlobal().state
+
+    val test = """
+        _G = nil
+        print("Hello, world!")
+        local function add(a, b)
+            return a + b
+        end
+        local function subtract(a, b)
+            return a - b
+        end
+        local function multiply(a, b)
+            return a * b
+        end
+        local function divide(a, b)
+            if b == 0 then
+                error("Division by zero is not allowed")
+            end
+            return a / b
+        end
+        local function main()
+            print("Addition: " .. add(5, 3))
+            print("Subtraction: " .. subtract(5, 3))
+            print("Multiplication: " .. multiply(5, 3))
+            print("Division: " .. divide(5, 3))
+        end
+        main()
+    """.trimIndent()
+
+    val compiler = LuauCompiler.builder().build()
+    val bytecode = compiler.compile(test)
+
+    try {
+        state.openLibs()
+        state.sandbox()
+
+        val thread = state.newThread()
+        thread.sandbox()
+
+        val script = thread.load("test.luau", bytecode)
+        println("status:" + script.run())
+
+        thread.close()
+    } finally {
+        state.close();
+    }
+}

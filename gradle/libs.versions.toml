@@ -1,0 +1,5 @@
+[versions]
+luau = "0.1.0"
+
+[libraries]
+luau = { module = "dev.hollowcube:luau", version.ref = "luau" }
