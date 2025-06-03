@@ -9,5 +9,5 @@ object Compilers {
         .debugLevel(DebugLevel.DEBUGGER)
         .optimizationLevel(OptimizationLevel.NONE)
         .build()
-    val RELEASE = LuauCompiler.builder()
+    val RELEASE = LuauCompiler.DEFAULT
 }

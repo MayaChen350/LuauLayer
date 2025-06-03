@@ -1,6 +1,7 @@
 package evo.lualayer.wrapper
 
 import evo.lualayer.setup.LuauConfig
+import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
 
 /**
@@ -19,7 +20,7 @@ interface LuaStateWrapper {
     val config: LuauConfig
 
     /**
-     * Opens standard libraries in the Lua state.
+     * Builtin Libraries
      */
     fun openLibs() = lua.openLibs()
 
@@ -55,10 +56,21 @@ interface LuaStateWrapper {
      * @param bytecode The compiled bytecode of the script.
      * @return A `LuauScript` instance representing the loaded script.
      */
-    fun load(name: String, bytecode: ByteArray): LuauScript = LuauScript(
+    fun load(name: String, bytecode: ByteArray): LuauScript = LuauScript( // TODO: cache compiled scripts
         lua = lua,
         name = name,
         bytecode = bytecode,
         config = config
     )
+
+    /**
+     * Adds a global Lua function to the Lua state.
+     *
+     * @param name The name of the global function.
+     * @param func The Lua function to add.
+     */
+    fun addGlobal(name: String, func: LuaFunc) {
+        lua.pushCFunction(func, name)
+        lua.setGlobal(name)
+    }
 }
