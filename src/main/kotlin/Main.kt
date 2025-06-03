@@ -13,7 +13,6 @@ fun main(args: Array<String>) {
     val state = config.state
 
     val test = """
-        _G = nil
         print("Hello, world!")
         local function add(a, b)
             return a + b
@@ -43,7 +42,6 @@ fun main(args: Array<String>) {
 
     try {
         state.sandbox()
-
         val thread = state.newThread()
         thread.sandbox()
 
