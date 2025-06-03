@@ -30,11 +30,12 @@ open class State(
         }
         state.pop(1)
 
-        val file = File("src/test/resources/$moduleName.luau")
-        if (!file.exists()) {
-            state.pushNil()
-            return@LuaFunc 1
-        }
+        val file = config.paths.asSequence()
+            .map { File(it, "$moduleName.luau") }
+            .firstOrNull { it.exists() } ?: run {
+                state.pushNil()
+                return@LuaFunc 1
+            }
 
         //hotload(file)
         val fileBytes = file.readBytes()
