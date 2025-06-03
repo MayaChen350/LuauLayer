@@ -6,7 +6,7 @@ import java.io.File
 
 open class State(
     override val lua: LuaState = LuaState.newState(),
-    libs: Set<LuauLib> = setOf(),
+    libs: Set<LuauLib>? = null,
 ) : LuaStateWrapper {
 
     val require = LuaFunc { state: LuaState ->
@@ -56,7 +56,7 @@ open class State(
     }
 
     init {
-        if (libs.isNotEmpty()) {
+        if (libs?.isNotEmpty() == true) {
             lua.openLibs()
             this.addGlobal("require", require)
             for (lib in libs) {

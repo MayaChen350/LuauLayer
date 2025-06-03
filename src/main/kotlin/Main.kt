@@ -42,7 +42,6 @@ fun main(args: Array<String>) {
     val bytecode = config.compiler.compile(test)
 
     try {
-        state.openLibs()
         state.sandbox()
 
         val thread = state.newThread()
