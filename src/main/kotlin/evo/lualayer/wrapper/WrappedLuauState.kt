@@ -27,7 +27,7 @@ interface WrappedLuauState {
     /**
      * Sandboxes the Lua state, restricting it from modifying the environment.
      */
-    fun sandbox() = lua.sandbox()
+    fun sandbox()
 
     /**
      * Calls a Lua function with the specified number of arguments and expected results.
@@ -37,7 +37,7 @@ interface WrappedLuauState {
      */
     fun pcall(args: Int, results: Int) = lua.pcall(args, results)
 
-    fun pcall(script: LuauScript) { // TODO: abstract ref
+    fun invoke(script: LuauScript) { // TODO: abstract ref
         lua.getref(script.ref)
         pcall(script.args, script.results)
     }
@@ -62,7 +62,7 @@ interface WrappedLuauState {
      * @return A `LuauScript` instance representing the loaded script.
      */
     fun load(name: String, bytecode: ByteArray): LuauScript = LuauScript( // TODO: cache compiled scripts
-        lua = lua,
+        state = this,
         name = name,
         bytecode = bytecode,
         config = config
@@ -77,5 +77,9 @@ interface WrappedLuauState {
     fun addGlobal(name: String, func: LuaFunc) {
         lua.pushCFunction(func, name)
         lua.setGlobal(name)
+    }
+
+    fun createRef(i: Int = -1): Int {
+        return lua.ref(i)
     }
 }

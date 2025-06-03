@@ -5,7 +5,6 @@ import cz.lukynka.prettylog.log
 import evo.lualayer.setup.LuauConfig
 import net.hollowcube.luau.LuaState
 import net.hollowcube.luau.LuaStatus
-import kotlin.properties.Delegates
 
 /**
  * Represents a Lua script loaded into a Lua state.
@@ -16,22 +15,18 @@ import kotlin.properties.Delegates
  * @param name The name of the script.
  * @param bytecode The compiled bytecode of the script.
  */
-class LuauScript(
-    override val lua: LuaState,
-    name: String,
-    bytecode: ByteArray,
-    override val config: LuauConfig
-) : WrappedLuauState {
+class LuauScript(val state: WrappedLuauState, name: String, bytecode: ByteArray, val config: LuauConfig) {
 
-    var ref by Delegates.notNull<Int>()
-        private set
+    val lua: LuaState = state.lua
+
+    val ref: Int
     var args: Int = 0
         private set
     var results: Int = 0
 
     init {
-        lua.load(name, bytecode)
-        ref = lua.ref(-1)
+        state.lua.load(name, bytecode)
+        ref = state.createRef()
     }
 
     /**
@@ -41,10 +36,13 @@ class LuauScript(
      */
     fun run(): LuaStatus = try {
         log("Running script with ref: <bold>$ref", LogType.DEBUG)
-        pcall(this)
+        state.invoke(this)
         LuaStatus.OK
     } catch (e: Exception) {
-        e.printStackTrace()
+        log("Error running script: ${lua.toString(-1)}", LogType.ERROR)
+        if (!e.message.isNullOrEmpty()) {
+            e.printStackTrace()
+        }
         LuaStatus.ERRRUN // TODO: more specific error handling
     }
 }

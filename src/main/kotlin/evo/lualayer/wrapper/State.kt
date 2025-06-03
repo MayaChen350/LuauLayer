@@ -79,7 +79,7 @@ open class State(
      * @return A `LuauScript` instance representing the loaded script.
      * @throws IllegalArgumentException If the file does not exist in the configured paths.
      */
-    fun loadFromPaths(name: String): LuauScript {
+    fun load(name: String): LuauScript {
         val file = File(config.paths.firstOrNull() ?: ".", name)
         if (!file.exists()) {
             throw IllegalArgumentException("File $name does not exist in paths: ${config.paths.joinToString(", ")}")

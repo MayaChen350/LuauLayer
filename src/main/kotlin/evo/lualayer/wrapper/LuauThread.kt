@@ -5,7 +5,7 @@ import cz.lukynka.prettylog.log
 import evo.lualayer.setup.LuauConfig
 import net.hollowcube.luau.LuaState
 
-class LuauThread(
+class LuauThread( // TODO: look into pushThread()
     override var config: LuauConfig,
     private val parent: LuaState
 ) : State(
