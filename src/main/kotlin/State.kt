@@ -1,12 +1,13 @@
 package evo
 
-import evo.evo.LuauConfig
 import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
-import net.hollowcube.luau.compiler.LuauCompiler
 import java.io.File
 
-class State(override val lua: LuaState = LuaState.newState(), val config: LuauConfig) : LuaStateWrapper {
+open class State(
+    override val lua: LuaState = LuaState.newState(),
+    libs: Set<LuauLib> = setOf(),
+) : LuaStateWrapper {
     val require = LuaFunc { state: LuaState ->
         with(state) {
             val moduleName = checkStringArg(1)
@@ -47,4 +48,18 @@ class State(override val lua: LuaState = LuaState.newState(), val config: LuauCo
 
         load(file.name, result)
     }
+
+    fun addGlobal(name: String, func: LuaFunc) {
+        lua.pushCFunction(func, name)
+        lua.setGlobal(name)
+    }
+
+    init {
+        openLibs()
+        addGlobal("require", require)
+        for (lib in libs) {
+            lua.registerLib(lib.name, lib.functions)
+        }
+    }
 }
+

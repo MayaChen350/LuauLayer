@@ -2,7 +2,7 @@ package evo
 
 import net.hollowcube.luau.LuaState
 
-class LuauThread(private val parent: LuaState) : LuaStateWrapper {
+class LuauThread(private val parent: LuaState) : State(lua = parent) {
 
     override val lua: LuaState = parent.newThread()
 

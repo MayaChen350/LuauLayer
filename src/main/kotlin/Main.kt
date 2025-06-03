@@ -2,15 +2,14 @@ package evo
 
 import evo.evo.LuauConfig
 
-
-fun main(args: Array<String>) {
-    val config = LuauConfig(
-        paths = setOf(
-            "src/main/resources/lua",
-            "src/main/resources/luau",
-            "src/main/resources/luau/stdlib"
-        )
+val config = LuauConfig(
+    paths = setOf(
+        "src/main/resources/lua",
+        "src/main/resources/luau",
+        "src/main/resources/luau/stdlib"
     )
+)
+fun main(args: Array<String>) {
     val state = config.state
 
     val test = """
