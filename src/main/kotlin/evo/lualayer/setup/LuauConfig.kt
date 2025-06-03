@@ -1,7 +1,7 @@
-package evo.evo
+package evo.evo.lualayer.setup
 
-import evo.LuauLib
-import evo.State
+import evo.evo.lualayer.wrapper.LuauLib
+import evo.evo.lualayer.wrapper.State
 import net.hollowcube.luau.compiler.LuauCompiler
 
 class LuauConfig(

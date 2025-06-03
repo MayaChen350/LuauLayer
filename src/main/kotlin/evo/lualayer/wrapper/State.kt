@@ -1,5 +1,6 @@
-package evo
+package evo.evo.lualayer.wrapper
 
+import evo.config
 import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
 import java.io.File
@@ -8,7 +9,7 @@ open class State(
     override val lua: LuaState = LuaState.newState(),
 ) : LuaStateWrapper {
 
-    val require = LuaFunc { state: LuaState ->
+    val require = LuaFunc { state: LuaState -> // TODO: Add wrapper for LuaFunc
         with(state) {
             val moduleName = checkStringArg(1)
             println("Requiring module: $moduleName")

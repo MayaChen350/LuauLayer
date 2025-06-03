@@ -1,6 +1,6 @@
 package evo
 
-import evo.evo.LuauConfig
+import evo.evo.lualayer.setup.LuauConfig
 
 val config = LuauConfig(
     paths = setOf(
@@ -13,6 +13,7 @@ fun main(args: Array<String>) {
     val state = config.state
 
     val test = """
+        local l = require("luau.stdlib")
         print("Hello, world!")
         local function add(a, b)
             return a + b
