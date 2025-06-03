@@ -5,12 +5,22 @@ import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
 import java.io.File
 
+/**
+ * Represents a wrapper for a Lua state, providing methods to interact with the Lua environment.
+ *
+ * @property config The configuration for the Lua environment.
+ * @property lua The Lua state instance being wrapped.
+ */
 open class State(
     override var config: LuauConfig,
     override val lua: LuaState = LuaState.newState(),
 ) : LuaStateWrapper {
 
-    val require = LuaFunc { state: LuaState -> // TODO: Add wrapper for LuaFunc
+    /**
+     * A Lua function for requiring modules. Searches for the module in the global scope
+     * or loads it from the configured paths.
+     */
+    val require = LuaFunc { state: LuaState ->
         with(state) {
             val moduleName = checkStringArg(1)
             println("Requiring module: $moduleName")
@@ -44,6 +54,12 @@ open class State(
         1
     }
 
+    /**
+     * Loads a Lua script from a file and compiles it into bytecode.
+     *
+     * @param file The file containing the Lua script.
+     * @return A `LuauScript` instance representing the loaded script.
+     */
     fun hotload(file: File): LuauScript {
         val fileBytes = file.readBytes()
         val bytecode = config.compiler.compile(fileBytes)
@@ -51,6 +67,13 @@ open class State(
         return load(file.name, bytecode)
     }
 
+    /**
+     * Loads a Lua script from the configured paths.
+     *
+     * @param name The name of the script to load.
+     * @return A `LuauScript` instance representing the loaded script.
+     * @throws IllegalArgumentException If the file does not exist in the configured paths.
+     */
     fun loadFromPaths(name: String): LuauScript {
         val file = File(config.paths.firstOrNull() ?: ".", name)
         if (!file.exists()) {
@@ -60,11 +83,23 @@ open class State(
         return load(name, bytecode)
     }
 
+    /**
+     * Adds a global Lua function to the Lua state.
+     *
+     * @param name The name of the global function.
+     * @param func The Lua function to add.
+     */
     fun addGlobal(name: String, func: LuaFunc) {
         lua.pushCFunction(func, name)
         lua.setGlobal(name)
     }
 
+    /**
+     * Adds libraries to the Lua state and initializes them.
+     *
+     * @param libs A set of libraries to add.
+     * @return The current `State` instance.
+     */
     fun addLibs(libs: Set<LuauLib>): State {
         openLibs()
         addGlobal("require", require)
@@ -74,4 +109,3 @@ open class State(
         return this
     }
 }
-

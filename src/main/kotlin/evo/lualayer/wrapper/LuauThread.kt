@@ -5,7 +5,10 @@ import net.hollowcube.luau.LuaState
 
 class LuauThread(override var config: LuauConfig, private val parent: LuaState) : State(config = config, lua = parent.newThread()) {
 
-    override fun close() {
+    /**
+     * Closes this Luau thread by popping one value from the parent Lua state's stack.
+     */
+    override fun close() { // TODO: Verify if this is the correct way to close a thread
         parent.pop(1)
     }
 }
