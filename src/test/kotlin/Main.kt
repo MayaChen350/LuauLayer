@@ -16,7 +16,6 @@ fun main(args: Array<String>) {
         val thread = state.newThread()
         state.sandbox()
         thread.sandbox()
-        thread.sandbox()
         val script = thread.loadFromPaths("needy.luau")
         val script1 = thread.loadFromPaths("requireable.luau")
         log("status0:" + script.run(), LogType.RUNTIME)

@@ -23,12 +23,12 @@ class LuauScript(
     override val config: LuauConfig
 ) : LuaStateWrapper {
 
-    var ptr by Delegates.notNull<Int>()
+    var ref by Delegates.notNull<Int>()
         private set
 
     init {
         lua.load(name, bytecode)
-        ptr = lua.ref(-1)
+        ref = lua.ref(-1)
     }
 
     /**
@@ -37,8 +37,8 @@ class LuauScript(
      * @return The status of the script execution, either `LuaStatus.OK` or `LuaStatus.ERRRUN`.
      */
     fun run(args: Int = 0, results: Int = 0): LuaStatus = try {
-        log("Running script with ptr: <bold>$ptr", LogType.DEBUG)
-        lua.getref(ptr)
+        log("Running script with ref: <bold>$ref", LogType.DEBUG)
+        lua.getref(ref)
         pcall(args, results)
         LuaStatus.OK
     } catch (e: Exception) {
