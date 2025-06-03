@@ -1,11 +1,12 @@
-package evo.evo.lualayer.wrapper
+package evo.lualayer.wrapper
 
-import evo.config
+import evo.lualayer.setup.LuauConfig
 import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
 import java.io.File
 
 open class State(
+    override var config: LuauConfig,
     override val lua: LuaState = LuaState.newState(),
 ) : LuaStateWrapper {
 
@@ -43,11 +44,20 @@ open class State(
         1
     }
 
-    fun hotload(file: File) {
+    fun hotload(file: File): LuauScript {
         val fileBytes = file.readBytes()
-        val result = config.compiler.compile(fileBytes)
+        val bytecode = config.compiler.compile(fileBytes)
 
-        load(file.name, result)
+        return load(file.name, bytecode)
+    }
+
+    fun loadFromPaths(name: String): LuauScript {
+        val file = File(config.paths.firstOrNull() ?: ".", name)
+        if (!file.exists()) {
+            throw IllegalArgumentException("File $name.luau does not exist in paths: ${config.paths.joinToString(", ")}")
+        }
+        val bytecode = config.compiler.compile(file.readBytes())
+        return load(name, bytecode)
     }
 
     fun addGlobal(name: String, func: LuaFunc) {

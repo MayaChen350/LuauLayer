@@ -1,4 +1,4 @@
-package evo.evo.lualayer.setup
+package evo.lualayer.setup
 
 import net.hollowcube.luau.compiler.DebugLevel
 import net.hollowcube.luau.compiler.LuauCompiler

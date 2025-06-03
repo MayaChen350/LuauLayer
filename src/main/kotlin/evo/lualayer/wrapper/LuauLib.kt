@@ -1,4 +1,4 @@
-package evo.evo.lualayer.wrapper
+package evo.lualayer.wrapper
 
 import net.hollowcube.luau.LuaFunc
 
