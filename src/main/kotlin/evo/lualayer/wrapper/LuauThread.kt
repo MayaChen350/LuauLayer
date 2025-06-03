@@ -3,7 +3,6 @@ package evo.lualayer.wrapper
 import cz.lukynka.prettylog.LogType
 import cz.lukynka.prettylog.log
 import evo.lualayer.setup.LuauConfig
-import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
 
 class LuauThread(
@@ -13,6 +12,11 @@ class LuauThread(
     config = config,
     lua = parent.newThread()
 ) {
+    constructor(parent: WrappedLuauState) : this(
+        config = parent.config,
+        parent = parent.lua
+    )
+
     /**
      * Closes this Luau thread by popping one value from the parent Lua state's stack.
      */

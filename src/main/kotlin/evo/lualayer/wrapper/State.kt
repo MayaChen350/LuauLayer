@@ -16,7 +16,7 @@ import java.io.File
 open class State(
     override var config: LuauConfig,
     override val lua: LuaState = LuaState.newState(),
-) : LuaStateWrapper {
+) : WrappedLuauState {
     var sandboxed = false
         internal set
     /**

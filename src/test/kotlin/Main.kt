@@ -13,7 +13,7 @@ fun main(args: Array<String>) {
     val state = State(config = config).addLibs(config.libs)
 
     try {
-        val thread = state.newThread()
+        val thread = state.newThread() // TODO: Sandbox scope dsl maybe
         state.sandbox()
         thread.sandbox()
         val script = thread.loadFromPaths("needy.luau")
@@ -23,6 +23,6 @@ fun main(args: Array<String>) {
 
         thread.close()
     } finally {
-        state.close();
+        state.close()
     }
 }

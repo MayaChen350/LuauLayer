@@ -8,7 +8,7 @@ import net.hollowcube.luau.LuaState
  * Interface representing a wrapper for a Lua state, providing utility methods
  * to interact with and manage the Lua environment.
  */
-interface LuaStateWrapper {
+interface WrappedLuauState {
     /**
      * The Lua state instance being wrapped.
      */
@@ -52,7 +52,7 @@ interface LuaStateWrapper {
      *
      * @return A new instance of `LuauThread`.
      */
-    fun newThread(): LuauThread = LuauThread(config = config, parent = lua)
+    fun newThread(): LuauThread = LuauThread(this)
 
     /**
      * Loads a Lua script into the Lua state.

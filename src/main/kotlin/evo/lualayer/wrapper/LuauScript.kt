@@ -21,7 +21,7 @@ class LuauScript(
     name: String,
     bytecode: ByteArray,
     override val config: LuauConfig
-) : LuaStateWrapper {
+) : WrappedLuauState {
 
     var ref by Delegates.notNull<Int>()
         private set
@@ -39,7 +39,7 @@ class LuauScript(
      *
      * @return The status of the script execution, either `LuaStatus.OK` or `LuaStatus.ERRRUN`.
      */
-    fun run(args: Int = 0, results: Int = 0): LuaStatus = try {
+    fun run(): LuaStatus = try {
         log("Running script with ref: <bold>$ref", LogType.DEBUG)
         pcall(this)
         LuaStatus.OK
