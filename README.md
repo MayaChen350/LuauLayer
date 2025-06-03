@@ -60,10 +60,9 @@ fun main() {
 
 ## Dependencies
 
-This project relies on:
 *   `net.hollowcube:luau` for the core Luau binding.
 *   `cz.lukynka:pretty-log` for enhanced logging.
-*   `com.squareup.okio`, `kotlinx-serialization`, `kotlinx-datetime` for pretty-log.
+*   `com.squareup.okio`, `kotlinx-datetime` for pretty-log.
 
 For exact versions, see `gradle/libs.versions.toml`.
 
