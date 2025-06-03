@@ -1,10 +1,17 @@
 package evo
 
-import net.hollowcube.luau.compiler.LuauCompiler
+import evo.evo.LuauConfig
 
 
 fun main(args: Array<String>) {
-    val state = LGlobal().state
+    val config = LuauConfig(
+        paths = setOf(
+            "src/main/resources/lua",
+            "src/main/resources/luau",
+            "src/main/resources/luau/stdlib"
+        )
+    )
+    val state = config.state
 
     val test = """
         _G = nil
@@ -33,8 +40,7 @@ fun main(args: Array<String>) {
         main()
     """.trimIndent()
 
-    val compiler = LuauCompiler.builder().build()
-    val bytecode = compiler.compile(test)
+    val bytecode = config.compiler.compile(test)
 
     try {
         state.openLibs()
