@@ -1,5 +1,31 @@
 [versions]
 luau = "0.1.0"
+prettylog = "1.11"
+kotlinx-serialization = "1.8.1"
+kotlinx-datetime = "0.6.2"
+kotlin = "2.1.20"
+kotlinx-serialization-plugin = "2.1.20"
+okio = "3.10.2"
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinx-serialization-plugin" }
 
 [libraries]
 luau = { module = "dev.hollowcube:luau", version.ref = "luau" }
+prettylog-common = { module = "cz.lukynka:pretty-log-common", version.ref = "prettylog" }
+prettylog-jvm = { module = "cz.lukynka:pretty-log-jvm", version.ref = "prettylog" }
+
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+
+[bundles]
+prettylog = [
+    "prettylog-common",
+    "prettylog-jvm",
+]
+kotlinx = [
+    "kotlinx-datetime",
+]

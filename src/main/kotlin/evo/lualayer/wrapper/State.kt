@@ -1,5 +1,7 @@
 package evo.lualayer.wrapper
 
+import cz.lukynka.prettylog.LogType
+import cz.lukynka.prettylog.log
 import evo.lualayer.setup.LuauConfig
 import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
@@ -15,17 +17,19 @@ open class State(
     override var config: LuauConfig,
     override val lua: LuaState = LuaState.newState(),
 ) : LuaStateWrapper {
-
+    var sandboxed = false
+        internal set
     /**
      * A Lua function for requiring modules. Searches for the module in the global scope
      * or loads it from the configured paths.
      */
     val require = LuaFunc { state: LuaState ->
         val moduleName = state.checkStringArg(1)
-        println("Requiring module: $moduleName")
+        log("Requiring module: $moduleName", LogType.DEBUG)
 
         state.getGlobal(moduleName)
         if (!state.isNil(-1)) {
+            log("Module $moduleName found in global scope", LogType.DEBUG)
             return@LuaFunc 1
         }
         state.pop(1)
@@ -33,17 +37,18 @@ open class State(
         val file = config.paths.asSequence()
             .map { File(it, "$moduleName.luau") }
             .firstOrNull { it.exists() } ?: run {
+                log("Module $moduleName not found in paths: ${config.paths.joinToString(", ")}", LogType.ERROR)
                 state.pushNil()
                 return@LuaFunc 1
             }
 
-        //hotload(file)
         val fileBytes = file.readBytes()
         val bytecode = config.compiler.compile(fileBytes)
         state.load(moduleName, bytecode)
 
         state.pcall(0, 1)
         if (state.isNil(-1)) {
+            log("Error loading module $moduleName: ${state.toString(-1)}", LogType.ERROR)
             state.pushNil()
             return@LuaFunc 1
         }
@@ -91,12 +96,19 @@ open class State(
      */
     fun addLibs(libs: Set<LuauLib>): State {
         openLibs()
-        lua.pushCFunction(require, "require")
-        lua.setGlobal("require")
-        println("Added require function to global scope")
-/*        libs.forEach { lib ->
+        addGlobal("require", require)
+        libs.forEach { lib ->
             lua.registerLib(lib.name, lib.functions)
-        }*/
+        }
         return this
+    }
+
+    override fun sandbox() {
+        if (!sandboxed) {
+            lua.sandbox()
+            sandboxed = true
+        } else {
+            log("State is already sandboxed", LogType.WARNING)
+        }
     }
 }

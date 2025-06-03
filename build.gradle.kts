@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.1.20"
+    alias(libs.plugins.kotlin)
 }
 
 group = "evo"
@@ -7,13 +7,18 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
-}
+    maven {
+        name = "devOS"
+        url = uri("https://mvn.devos.one/releases")
+    }}
 
 dependencies {
     testImplementation(kotlin("test"))
-    //implementation(kotlin("reflect"))
     setOf(
         libs.luau,
+        libs.okio,
+        libs.bundles.prettylog,
+        libs.bundles.kotlinx,
         files("libs/luau-natives-windows-x64-dev.jar")
     ).forEach(::implementation)
 }

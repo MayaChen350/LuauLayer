@@ -1,3 +1,5 @@
+import cz.lukynka.prettylog.LogType
+import cz.lukynka.prettylog.log
 import evo.lualayer.setup.LuauConfig
 import evo.lualayer.wrapper.State
 
@@ -14,9 +16,11 @@ fun main(args: Array<String>) {
         val thread = state.newThread()
         state.sandbox()
         thread.sandbox()
+        thread.sandbox()
         val script = thread.loadFromPaths("needy.luau")
-        thread.pcall(0, 0)
-        //println("status:" + script.run(0, 1))
+        val script1 = thread.loadFromPaths("requireable.luau")
+        log("status0:" + script.run(), LogType.RUNTIME)
+        log("status1:" + script1.run(), LogType.RUNTIME)
 
         thread.close()
     } finally {
