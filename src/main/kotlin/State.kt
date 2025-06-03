@@ -8,6 +8,7 @@ open class State(
     override val lua: LuaState = LuaState.newState(),
     libs: Set<LuauLib> = setOf(),
 ) : LuaStateWrapper {
+
     val require = LuaFunc { state: LuaState ->
         with(state) {
             val moduleName = checkStringArg(1)
@@ -55,10 +56,12 @@ open class State(
     }
 
     init {
-        openLibs()
-        addGlobal("require", require)
-        for (lib in libs) {
-            lua.registerLib(lib.name, lib.functions)
+        if (libs.isNotEmpty()) {
+            lua.openLibs()
+            this.addGlobal("require", require)
+            for (lib in libs) {
+                lua.registerLib(lib.name, lib.functions)
+            }
         }
     }
 }
