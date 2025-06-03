@@ -6,7 +6,7 @@ import net.hollowcube.luau.LuaState
 import java.io.File
 
 /**
- * Represents a wrapper for a Lua state, providing methods to interact with the Lua environment.
+ * Represents a Lua state
  *
  * @property config The configuration for the Lua environment.
  * @property lua The Lua state instance being wrapped.
@@ -21,35 +21,34 @@ open class State(
      * or loads it from the configured paths.
      */
     val require = LuaFunc { state: LuaState ->
-        with(state) {
-            val moduleName = checkStringArg(1)
-            println("Requiring module: $moduleName")
+        val moduleName = state.checkStringArg(1)
+        println("Requiring module: $moduleName")
 
-            getGlobal(moduleName)
-            if (!isNil(-1)) {
-                return@LuaFunc 1
-            }
-            pop(1)
-
-            val file = config.paths.asSequence()
-                .map { File(it, "$moduleName.luau") }
-                .firstOrNull { it.exists() }
-            if (file == null) {
-                pushNil()
-                return@LuaFunc 1
-            }
-
-            hotload(file)
-
-            pcall(0, 1)
-            if (isNil(-1)) {
-                pushNil()
-                return@LuaFunc 1
-            }
-
-            pushValue(-1)
-            setGlobal(moduleName)
+        state.getGlobal(moduleName)
+        if (!state.isNil(-1)) {
+            return@LuaFunc 1
         }
+        state.pop(1)
+
+        val file = File("src/test/resources/$moduleName.luau")
+        if (!file.exists()) {
+            state.pushNil()
+            return@LuaFunc 1
+        }
+
+        //hotload(file)
+        val fileBytes = file.readBytes()
+        val bytecode = config.compiler.compile(fileBytes)
+        state.load(moduleName, bytecode)
+
+        state.pcall(0, 1)
+        if (state.isNil(-1)) {
+            state.pushNil()
+            return@LuaFunc 1
+        }
+
+        state.pushValue(-1)
+        state.setGlobal(moduleName)
 
         1
     }
@@ -77,21 +76,10 @@ open class State(
     fun loadFromPaths(name: String): LuauScript {
         val file = File(config.paths.firstOrNull() ?: ".", name)
         if (!file.exists()) {
-            throw IllegalArgumentException("File $name.luau does not exist in paths: ${config.paths.joinToString(", ")}")
+            throw IllegalArgumentException("File $name does not exist in paths: ${config.paths.joinToString(", ")}")
         }
         val bytecode = config.compiler.compile(file.readBytes())
         return load(name, bytecode)
-    }
-
-    /**
-     * Adds a global Lua function to the Lua state.
-     *
-     * @param name The name of the global function.
-     * @param func The Lua function to add.
-     */
-    fun addGlobal(name: String, func: LuaFunc) {
-        lua.pushCFunction(func, name)
-        lua.setGlobal(name)
     }
 
     /**
@@ -102,10 +90,12 @@ open class State(
      */
     fun addLibs(libs: Set<LuauLib>): State {
         openLibs()
-        addGlobal("require", require)
-        libs.forEach { lib ->
+        lua.pushCFunction(require, "require")
+        lua.setGlobal("require")
+        println("Added require function to global scope")
+/*        libs.forEach { lib ->
             lua.registerLib(lib.name, lib.functions)
-        }
+        }*/
         return this
     }
 }

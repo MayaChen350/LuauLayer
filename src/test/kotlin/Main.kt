@@ -11,12 +11,12 @@ fun main(args: Array<String>) {
     val state = State(config = config).addLibs(config.libs)
 
     try {
-        state.sandbox()
         val thread = state.newThread()
+        state.sandbox()
         thread.sandbox()
-
-        val script = thread.loadFromPaths("test.luau")
-        println("status:" + script.run())
+        val script = thread.loadFromPaths("needy.luau")
+        thread.pcall(0, 0)
+        //println("status:" + script.run(0, 1))
 
         thread.close()
     } finally {

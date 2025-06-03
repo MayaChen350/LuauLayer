@@ -11,14 +11,35 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation(kotlin("reflect"))
-    implementation(libs.luau)
-    implementation(files("libs/luau-natives-windows-x64-dev.jar"))
+    //implementation(kotlin("reflect"))
+    setOf(
+        libs.luau,
+        files("libs/luau-natives-windows-x64-dev.jar")
+    ).forEach(::implementation)
 }
 
-tasks.test {
-    useJUnitPlatform()
+tasks {
+    compileJava {
+        options.release.set(21)
+        options.encoding = "UTF-8"
+    }
+    test {
+        useJUnitPlatform()
+    }
 }
+
 kotlin {
     jvmToolchain(21)
+
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xnon-local-break-continue", "-Xmulti-dollar-interpolation")
+        extraWarnings.set(true)
+    }
+}
+
+java {
+    withSourcesJar()
+
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }

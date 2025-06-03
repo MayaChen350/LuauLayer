@@ -18,4 +18,11 @@ class LuauThread(
         parent.pop(1)
     }
 
+    /**
+     * Sandbox this thread
+     */
+    override fun sandbox() { // Holy fuck this has caused so many jvm crashes
+        lua.sandboxThread()
+    }
+
 }

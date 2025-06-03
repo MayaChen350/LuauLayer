@@ -28,8 +28,8 @@ class LuauScript(
      *
      * @return The status of the script execution, either `LuaStatus.OK` or `LuaStatus.ERRRUN`.
      */
-    fun run(): LuaStatus = try {
-        pcall(0, 0)
+    fun run(args: Int = 0, results: Int = 0): LuaStatus = try { // TODO: verify stack before pcall
+        pcall(args, results)
         LuaStatus.OK
     } catch (e: Exception) {
         e.printStackTrace()
