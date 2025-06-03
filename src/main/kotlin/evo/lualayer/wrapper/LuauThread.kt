@@ -31,5 +31,4 @@ class LuauThread(
             log("Thread is already sandboxed", LogType.WARNING)
         }
     }
-
 }

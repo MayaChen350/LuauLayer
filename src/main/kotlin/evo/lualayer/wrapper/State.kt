@@ -23,7 +23,7 @@ open class State(
      * A Lua function for requiring modules. Searches for the module in the global scope
      * or loads it from the configured paths.
      */
-    val require = LuaFunc { state: LuaState ->
+    val require = LuaFunc { state: LuaState -> // TODO: move out of here
         val moduleName = state.checkStringArg(1)
         log("Requiring module: $moduleName", LogType.DEBUG)
 

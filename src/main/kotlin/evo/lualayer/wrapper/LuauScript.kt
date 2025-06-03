@@ -25,6 +25,9 @@ class LuauScript(
 
     var ref by Delegates.notNull<Int>()
         private set
+    var args: Int = 0
+        private set
+    var results: Int = 0
 
     init {
         lua.load(name, bytecode)
@@ -38,8 +41,7 @@ class LuauScript(
      */
     fun run(args: Int = 0, results: Int = 0): LuaStatus = try {
         log("Running script with ref: <bold>$ref", LogType.DEBUG)
-        lua.getref(ref)
-        pcall(args, results)
+        pcall(this)
         LuaStatus.OK
     } catch (e: Exception) {
         e.printStackTrace()

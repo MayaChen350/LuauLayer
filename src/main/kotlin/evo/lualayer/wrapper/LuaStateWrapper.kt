@@ -37,6 +37,11 @@ interface LuaStateWrapper {
      */
     fun pcall(args: Int, results: Int) = lua.pcall(args, results)
 
+    fun pcall(script: LuauScript) { // TODO: abstract ref
+        lua.getref(script.ref)
+        pcall(script.args, script.results)
+    }
+
     /**
      * Closes the Lua state, releasing any resources associated with it.
      */
