@@ -34,7 +34,7 @@ fun foo(bool: Boolean): String {
     return "Foo returned: $bool"
 }
 
-@LuauFunction(lib = "fibonacci")
+@LuauFunction // not specifying lib means it will be added to the global namespace
 fun fibonacci(n: Int): Int {
     return if (n <= 1) n else fibonacci(n - 1) + fibonacci(n - 2)
 }
@@ -48,7 +48,7 @@ fun main(args: Array<String>) {
         thread.sandbox()
         val test = """
             print(misc.foo(false)) -- Should print: Foo returned: false
-            print(fibonacci.fibonacci(15)) -- Should print: 610
+            print(fibonacci(15)) -- Should print: 610
         """.trimIndent()
         val compiled = config.compiler.compile(test)
         val script = thread.load("test.luau", compiled)

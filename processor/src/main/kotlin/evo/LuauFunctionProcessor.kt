@@ -13,7 +13,7 @@ import net.hollowcube.luau.LuaState
 class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : SymbolProcessor {
 
     val objectName = "SyntheticLuauLibs"
-    val reserved = setOf("ALL", "GLOBAL")
+    val reserved = setOf("ALL")
     val lualayer = "evo.lualayer"
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -146,13 +146,14 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
                     }
                 }
             }
-            mapBuilder.addStatement(")")
+            mapBuilder.addStatement("),")
 
             val libInitializer = CodeBlock.builder()
                 .addStatement("%T(", luauLibType)
                 .indent()
                 .add("%S, ", libName.lowercase())
                 .add("%L", mapBuilder.build())
+                .addStatement((libName.lowercase() == "global").toString())
                 .unindent()
                 .addStatement(")")
                 .build()

@@ -98,7 +98,19 @@ open class State(
         openLibs()
         addGlobal("require", require)
         libs.forEach { lib ->
-            lua.registerLib(lib.name, lib.functions)
+            if (lib.functions.isEmpty()) {
+                log("Library ${lib.name} has no functions to register", LogType.WARNING)
+                return@forEach
+            }
+            log("Registering library: ${lib.name}", LogType.DEBUG)
+            if (lib.isGlobal) {
+                for ((name, func) in lib.functions) {
+                    lua.pushCFunction(func, name)
+                    lua.setGlobal(name)
+                }
+            } else {
+                lua.registerLib(lib.name, lib.functions)
+            }
         }
         return this
     }

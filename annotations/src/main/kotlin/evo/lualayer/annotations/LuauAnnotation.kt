@@ -11,4 +11,4 @@ package evo.lualayer.annotations
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
-annotation class LuauFunction(val name: String = "", val lib: String = "") // name can be optional, default to function name, lib can be used to specify the library name else it will be "Kotlin"
+annotation class LuauFunction(val name: String = "", val lib: String = "GLOBAL")
