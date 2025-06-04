@@ -66,11 +66,17 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
                     "kotlin.Boolean" -> "checkBooleanArg"
                     "kotlin.Double"  -> "checkNumberArg"
                     "kotlin.Float"   -> "checkNumberArg"
+                    "kotlin.Long"    -> "checkNumberArg"// Lua Long precision is shit anyway
                     else -> null
                 }
 
                 if (luauCheckMethod != null) {
-                    lambdaBody.addStatement("val %L = state.%L(%L)", paramName, luauCheckMethod, index + 1)
+                    val conversion = when (paramType.declaration.qualifiedName?.asString()) {
+                        "kotlin.Float" -> ".toFloat()"
+                        "kotlin.Long" -> ".toLong()"
+                        else -> ""
+                    }
+                    lambdaBody.addStatement("val %L = state.%L(%L)%L", paramName, luauCheckMethod, index + 1, conversion)
                     originalArgs.add(paramName)
                 } else {
                     logger.error(
@@ -86,8 +92,14 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
             val parent = function.parent
             val reference: CodeBlock = when (parent) {
                 is KSClassDeclaration -> {
-                    val parentClassName = ClassName(function.packageName.asString(), parent.simpleName.asString())
-                    CodeBlock.of("%T.%L", parentClassName, function.simpleName.asString())
+                    val classHierarchy = generateSequence(parent) {
+                        it.parent as? KSClassDeclaration
+                    }.toList().reversed()
+
+                    val fullClassName = classHierarchy.joinToString(".") { it.simpleName.asString() }
+
+                    val classType = ClassName(function.packageName.asString(), fullClassName)
+                    CodeBlock.of("%T.%L", classType, function.simpleName.asString())
                 }
 
                 is KSFile -> {
@@ -109,10 +121,10 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
             val returnType = function.returnType?.resolve()
             if (returnType != null && returnType.declaration.qualifiedName?.asString() != "kotlin.Unit") {
                 val statement = when (returnType.declaration.qualifiedName?.asString()) {
-                    "kotlin.String"                 -> "state.pushString(result)"
-                    "kotlin.Int"                    -> "state.pushInteger(result)"
-                    "kotlin.Boolean"                -> "state.pushBoolean(result)"
-                    "kotlin.Double", "kotlin.Float" -> "state.pushNumber(result.toDouble())"
+                    "kotlin.String"                             -> "state.pushString(result)"
+                    "kotlin.Int"                                -> "state.pushInteger(result)"
+                    "kotlin.Boolean"                            -> "state.pushBoolean(result)"
+                    "kotlin.Double", "kotlin.Float", "kotlin.Long"             -> "state.pushNumber(result.toDouble())"
                     else -> {
                         logger.error(
                             "Unsupported return type '${returnType.declaration.qualifiedName?.asString()}' for LuauFunction '${function.simpleName.asString()}'.",
