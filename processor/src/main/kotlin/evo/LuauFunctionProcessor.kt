@@ -32,8 +32,15 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
 
         annotatedFunctions.forEach { function ->
             val annotation = function.annotations.first { it.shortName.asString() == "LuauFunction" }
-            val luauFunctionName = annotation.arguments.getStringArg("name") ?: function.simpleName.asString()
-            val luauLibName = (annotation.arguments.getStringArg("lib") ?: "GLOBAL").uppercase().replace(" ", "_")
+            val luauFunctionName = annotation.arguments.getString("name")
+            val luauLibName = (annotation.arguments.getString("lib") ?: "GLOBAL").uppercase().replace(" ", "_")
+
+            luauLibsMap[luauLibName]?.any { it.key == luauFunctionName }?.let {
+                if (it) {
+                    logger.error("The function name '$luauFunctionName' already exists in the library '$luauLibName'.", function)
+                    return@forEach
+                }
+            }
 
             val libraryName = if (luauLibName in reserved) {
                 logger.error("The library name '$luauLibName' is reserved and cannot be used.", function)
@@ -41,6 +48,7 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
             } else {
                 luauLibName
             }
+            val internalFunctionName = luauFunctionName ?: (function.qualifiedName?.asString() ?: function.simpleName.asString()).replace(".", "_")
             val luaFuncClassName = LuaFunc::class.asClassName()
             val luaStateClassName = LuaState::class.asClassName()
 
@@ -95,6 +103,7 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
                     return@forEach
                 }
             }
+
             lambdaBody.addStatement("val result = %L(%L)", reference, callArgsString)
 
             val returnType = function.returnType?.resolve()
@@ -118,10 +127,8 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
                 lambdaBody.addStatement("return@LuaFunc 0")
             }
 
-            val functionName = luauFunctionName.replaceFirstChar { if (it.isTitleCase()) it.lowercaseChar() else it }
-
             val VAR_LUA_FUNC = PropertySpec.builder(
-                functionName, luaFuncClassName
+                internalFunctionName, luaFuncClassName
             ).initializer(
                 CodeBlock.builder().beginControlFlow("%T { state: %T ->", luaFuncClassName, luaStateClassName)
                     .add(lambdaBody.build()) 
@@ -130,7 +137,7 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
 
             generatedClassBuilder.addProperty(VAR_LUA_FUNC)
 
-            luauLibsMap.getOrPut(libraryName) { mutableMapOf() }[luauFunctionName] = functionName
+            luauLibsMap.getOrPut(libraryName) { mutableMapOf() }[luauFunctionName ?: function.simpleName.getShortName()] = internalFunctionName
 
             logger.info("Generated LuaFunc for: ${function.qualifiedName?.asString()} named '$luauFunctionName'")
         }
@@ -190,6 +197,6 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
     }
 }
 
-private fun List<KSValueArgument>.getStringArg(arg: String): String? {
+private fun List<KSValueArgument>.getString(arg: String): String? {
     return (firstOrNull { it.name?.asString() == arg }?.value as? String)?.takeIf { it.isNotBlank() }
 }
