@@ -2,7 +2,9 @@
 
 LuauLayer is a Kotlin JVM library that provides a primitive wrapper for Luau scripting built upon [`net.hollowcube:luau`](https://github.com/hollow-cube/luau-java).
 
-## Project Structure
+## Project Structure 
+###### _(already outdated)_
+###### _(also I messed up the package names (lualayer vs lua**u**layer))_
 
 *   `src/main/kotlin/evo/lualayer/`: Core library code.
     *   `setup/`: Configuration classes for `LuauConfig` and `Compilers`.
@@ -66,6 +68,7 @@ fun main(args: Array<String>) {
 *   `net.hollowcube:luau` for the core Luau binding.
 *   `cz.lukynka:pretty-log` for enhanced logging.
 *   `com.squareup.okio`, `kotlinx-datetime` for pretty-log.
+*   `com.google.devtools.ksp`
 
 For exact versions, see `gradle/libs.versions.toml`.
 

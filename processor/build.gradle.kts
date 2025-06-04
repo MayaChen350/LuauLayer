@@ -6,14 +6,6 @@ plugins {
 group = rootProject.group
 version = rootProject.version
 
-repositories {
-    mavenCentral()
-    maven {
-        name = "devOS"
-        url = uri("https://mvn.devos.one/releases")
-    }
-}
-
 dependencies {
     implementation(kotlin("stdlib"))
 
