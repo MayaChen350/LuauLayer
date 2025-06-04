@@ -3,13 +3,16 @@ luau = "0.1.0"
 prettylog = "1.11"
 kotlinx-serialization = "1.8.1"
 kotlinx-datetime = "0.6.2"
-kotlin = "2.1.20"
-kotlinx-serialization-plugin = "2.1.20"
+kotlin = "2.1.21"
+kotlinx-serialization-plugin = "2.1.21"
 okio = "3.10.2"
+ksp = "2.1.21-2.0.1"
+kotlinpoet = "2.2.0"
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinx-serialization-plugin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 [libraries]
 luau = { module = "dev.hollowcube:luau", version.ref = "luau" }
@@ -21,6 +24,9 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
+kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
+kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
+
 [bundles]
 prettylog = [
     "prettylog-common",
@@ -28,4 +34,8 @@ prettylog = [
 ]
 kotlinx = [
     "kotlinx-datetime",
+]
+kotlinpoet = [
+    "kotlinpoet",
+    "kotlinpoet-ksp",
 ]

@@ -21,37 +21,40 @@ LuauLayer is a Kotlin JVM library that provides a primitive wrapper for Luau scr
 ## Usage Example
 
 ```kotlin
-fun main() {
-    // Define a Kotlin function that Luau can call
-    val greetingFunc = LuaFunc { luaState: LuaState ->
-        val name = luaState.checkStringArg(1) // Get the first argument as a string
-        println("Hello from Kotlin: $name!")
-        luaState.pushString("Greeting processed!") // Return a string to Luau
-        1 // No. of return values
-    }
+val config = LuauConfig(
+    paths = setOf(
+        "lualayer/src/test/resources"
+    ),
+    libs = SyntheticLuauLibs.ALL  // or use setOf(SyntheticLuauLibs.MISC, SyntheticLuauLibs.FOO) if you want specific libs
+)
 
-    // Create a LuauLib instance to bundle your functions
-    val lib = LuauLib(
-        name = "kt_utils", // This will be the global name in Luau (e.g., `kt_utils.greet()`)
-        functions = mapOf(
-            "greet" to greetingFunc
-        )
-    )
+@LuauFunction(lib = "misc")
+fun foo(bool: Boolean): String {
+    log("Foo function called with $bool", LogType.DEBUG)
+    return "Foo returned: $bool"
+}
 
-    val config = LuauConfig()
-    // Add your custom library when initializing the state
-    val state = State(config = config).addLibs(setOf(lib))
+@LuauFunction(lib = "fibonacci")
+fun fibonacci(n: Int): Int {
+    return if (n <= 1) n else fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+fun main(args: Array<String>) {
+    val state = State(config = config).addLibs(config.libs)
 
     try {
-        val example = """
-            local kt_utils = require("kt_utils")
-            local result = kt_utils.greet("World")
-            print(result)
+        val thread = state.newThread() // TODO: Sandbox scope dsl maybe
+        state.sandbox()
+        thread.sandbox()
+        val test = """
+            print(misc.foo(false)) -- Should print: Foo returned: false
+            print(fibonacci.fibonacci(15)) -- Should print: 610
         """.trimIndent()
-        val compiled = config.compiler.compile(example)
-        val script = state.load("example_script", compiled)
+        val compiled = config.compiler.compile(test)
+        val script = thread.load("test.luau", compiled)
         log("status:" + script.run(), LogType.RUNTIME)
 
+        thread.close()
     } finally {
         state.close()
     }
