@@ -40,7 +40,7 @@ fun fibonacci(n: Int): Int {
     return if (n <= 1) n else fibonacci(n - 1) + fibonacci(n - 2)
 }
 
-// also can be defined in a separate (companion) object or
+// can also be defined in a separate (companion) object
 object Object {
     @LuauFunction(lib = "veclib")
     fun double(a: Float): Float {

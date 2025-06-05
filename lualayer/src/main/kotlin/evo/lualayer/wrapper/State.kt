@@ -6,6 +6,7 @@ import evo.lualayer.setup.LuauConfig
 import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Represents a Lua state
@@ -128,7 +129,7 @@ open class State(
         }
     }
 
-    val scriptRefs = hashMapOf<Int, Int>() // maybe I should generalize memory management
+    val scriptRefs = ConcurrentHashMap<Int, Int>() // maybe I should generalize memory management
     //var threadRefs = mutableSetOf<Int>()
 
     override fun close() {
