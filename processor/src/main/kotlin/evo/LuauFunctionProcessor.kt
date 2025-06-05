@@ -92,6 +92,14 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
             val parent = function.parent
             val reference: CodeBlock = when (parent) {
                 is KSClassDeclaration -> {
+                    val inObj = parent.isCompanionObject || parent.classKind == ClassKind.OBJECT
+                    if (!inObj) {
+                        logger.info(
+                            "Skipping function '${function.simpleName.asString()}' in class (not in companion object).",
+                            function
+                        )
+                        return@forEach
+                    }
                     val classHierarchy = generateSequence(parent) {
                         it.parent as? KSClassDeclaration
                     }.toList().reversed()
@@ -143,7 +151,7 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
                 internalFunctionName, luaFuncClassName
             ).initializer(
                 CodeBlock.builder().beginControlFlow("%T { state: %T ->", luaFuncClassName, luaStateClassName)
-                    .add(lambdaBody.build()) 
+                    .add(lambdaBody.build())
                     .endControlFlow().build()
             ).build()
 
