@@ -42,6 +42,7 @@ class LuauScript(val state: State, name: String, bytecode: ByteArray, val config
      * @return The status of the script execution, either `LuaStatus.OK` or `LuaStatus.ERRRUN`.
      */
     fun run(): LuaStatus = try {
+        log("Running script with ref: <bold>$ref", LogType.DEBUG)
         lua.getref(ref)
         lua.pcall(0, 0)
         LuaStatus.OK

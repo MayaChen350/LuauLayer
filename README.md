@@ -51,8 +51,9 @@ object Object {
 fun main(args: Array<String>) {
     State(config = config).addLibs(config.libs).runSandboxed { state ->
         val test = """
-                    misc.foo(false) -- Should print: Foo returned: false            
-                    local l = fibonacci(15) * 10 -- Should print: 6100
+                    print(misc.foo(false)) -- Should print: Foo returned: false            
+                    local l = fibonacci(15) * 10
+                    print(l) -- Should print: 6100
                 """.trimIndent()
         val compiled = config.compiler.compile(test)
 
