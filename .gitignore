@@ -47,4 +47,4 @@ bin/
 ### lua ###
 /*.log
 /libs/
-/.idea/
+/.idea/.*
