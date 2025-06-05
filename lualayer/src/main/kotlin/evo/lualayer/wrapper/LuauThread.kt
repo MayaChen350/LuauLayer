@@ -2,8 +2,10 @@ package evo.lualayer.wrapper
 
 import cz.lukynka.prettylog.LogType
 import cz.lukynka.prettylog.log
+import evo.lualayer.absRef
 import evo.lualayer.setup.LuauConfig
 import net.hollowcube.luau.LuaState
+import net.hollowcube.luau.LuaType
 
 class LuauThread( // TODO: look into pushThread()
     override var config: LuauConfig,
@@ -17,11 +19,22 @@ class LuauThread( // TODO: look into pushThread()
         parent = parent.lua
     )
 
-    /**
-     * Closes this Luau thread by popping one value from the parent Lua state's stack.
-     */
-    override fun close() { // TODO: Verify if this is the correct way to close a thread
-        parent.pop(1)
+    val ref: Int
+
+    init {
+        require(parent.type(-1) == LuaType.THREAD) {
+            "Parent Lua state must be a thread, but got ${parent.type(-1)}"
+        }
+        ref = parent.absRef(-1)
+    }
+
+    override fun close() {
+        cleanup()
+        parent.run {
+            //getref(ref) TODO: test if this is needed
+            unref(ref)
+            pop(1)
+        }
     }
 
     /**

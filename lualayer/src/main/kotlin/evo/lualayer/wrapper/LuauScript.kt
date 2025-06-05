@@ -15,7 +15,7 @@ import net.hollowcube.luau.LuaStatus
  * @param name The name of the script.
  * @param bytecode The compiled bytecode of the script.
  */
-class LuauScript(val state: WrappedLuauState, name: String, bytecode: ByteArray, val config: LuauConfig) {
+class LuauScript(val state: State, name: String, bytecode: ByteArray, val config: LuauConfig) {
 
     val lua: LuaState = state.lua
 
@@ -25,8 +25,15 @@ class LuauScript(val state: WrappedLuauState, name: String, bytecode: ByteArray,
     var results: Int = 0
 
     init {
-        state.lua.load(name, bytecode)
-        ref = state.createRef()
+        val hash = bytecode.contentHashCode()
+        if (state.scriptRefs.containsKey(hash)) {
+            log("Script with hash $hash already loaded, reusing existing reference", LogType.DEBUG)
+            ref = state.scriptRefs[hash] ?: throw IllegalStateException("Script reference not found")
+        } else {
+            state.lua.load(name, bytecode)
+            ref = state.createRef()
+            state.scriptRefs[hash] = ref
+        }
     }
 
     /**
@@ -35,8 +42,8 @@ class LuauScript(val state: WrappedLuauState, name: String, bytecode: ByteArray,
      * @return The status of the script execution, either `LuaStatus.OK` or `LuaStatus.ERRRUN`.
      */
     fun run(): LuaStatus = try {
-        log("Running script with ref: <bold>$ref", LogType.DEBUG)
-        state.invoke(this)
+        lua.getref(ref)
+        lua.pcall(0, 0)
         LuaStatus.OK
     } catch (e: Exception) {
         log("Error running script: ${lua.toString(-1)}", LogType.ERROR)

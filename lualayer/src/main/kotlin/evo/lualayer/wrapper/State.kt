@@ -16,9 +16,10 @@ import java.io.File
 open class State(
     override var config: LuauConfig,
     override val lua: LuaState = LuaState.newState(),
-) : WrappedLuauState {
+) : WrappedLuauState, AutoCloseable {
     var sandboxed = false
         internal set
+
     /**
      * A Lua function for requiring modules. Searches for the module in the global scope
      * or loads it from the configured paths.
@@ -121,6 +122,45 @@ open class State(
             sandboxed = true
         } else {
             log("State is already sandboxed", LogType.WARNING)
+/*            Thread.currentThread().stackTrace.drop(2).forEach { element ->
+                log("  at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})", LogType.TRACE)
+            }*/
         }
+    }
+
+    val scriptRefs = hashMapOf<Int, Int>() // maybe I should generalize memory management
+    //var threadRefs = mutableSetOf<Int>()
+
+    override fun close() {
+        cleanup()
+        lua.close()
+        log("Lua state closed", LogType.DEBUG)
+    }
+
+    fun cleanup() {
+        for ((hash, ref) in scriptRefs) {
+            scriptRefs.remove(hash)
+            lua.run {
+                getref(ref)
+                unref(ref)
+                pop(1)
+            }
+        }
+    }
+
+    /**
+     * Creates a new Lua thread associated with the current Lua state.
+     *
+     * @return A new instance of `LuauThread`.
+     */
+    fun newThread(): LuauThread = LuauThread(this)
+
+    fun load(name: String, bytecode: ByteArray): LuauScript {
+        return LuauScript( // TODO: cache compiled scripts
+            state = this,
+            name = name,
+            bytecode = bytecode,
+            config = config
+        )
     }
 }

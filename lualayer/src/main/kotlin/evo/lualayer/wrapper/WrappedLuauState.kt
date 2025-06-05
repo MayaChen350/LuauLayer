@@ -1,5 +1,6 @@
 package evo.lualayer.wrapper
 
+import evo.lualayer.absRef
 import evo.lualayer.setup.LuauConfig
 import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
@@ -42,31 +43,7 @@ interface WrappedLuauState {
         pcall(script.args, script.results)
     }
 
-    /**
-     * Closes the Lua state, releasing any resources associated with it.
-     */
-    fun close() = lua.close()
-
-    /**
-     * Creates a new Lua thread associated with the current Lua state.
-     *
-     * @return A new instance of `LuauThread`.
-     */
-    fun newThread(): LuauThread = LuauThread(this)
-
-    /**
-     * Loads a Lua script into the Lua state.
-     *
-     * @param name The name of the script.
-     * @param bytecode The compiled bytecode of the script.
-     * @return A `LuauScript` instance representing the loaded script.
-     */
-    fun load(name: String, bytecode: ByteArray): LuauScript = LuauScript( // TODO: cache compiled scripts
-        state = this,
-        name = name,
-        bytecode = bytecode,
-        config = config
-    )
+    fun close()
 
     /**
      * Adds a global Lua function to the Lua state.
@@ -80,6 +57,6 @@ interface WrappedLuauState {
     }
 
     fun createRef(i: Int = -1): Int {
-        return lua.ref(i)
+        return lua.absRef(i)
     }
 }
