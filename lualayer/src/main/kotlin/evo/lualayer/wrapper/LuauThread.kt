@@ -25,16 +25,12 @@ class LuauThread( // TODO: look into pushThread()
         require(parent.type(-1) == LuaType.THREAD) {
             "Parent Lua state must be a thread, but got ${parent.type(-1)}"
         }
-        ref = parent.absRef(-1)
+        ref = parent.ref(-1)
+        super.threadRefs.add(ref)
     }
 
     override fun close() {
-        cleanup()
-        parent.run {
-            //getref(ref) TODO: test if this is needed
-            unref(ref)
-            pop(1)
-        }
+        super.cleanup()
     }
 
     /**

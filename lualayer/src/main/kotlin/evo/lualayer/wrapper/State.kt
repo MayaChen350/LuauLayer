@@ -130,7 +130,7 @@ open class State(
     }
 
     val scriptRefs = ConcurrentHashMap<Int, Int>() // maybe I should generalize memory management
-    //var threadRefs = mutableSetOf<Int>()
+    var threadRefs = mutableSetOf<Int>()
 
     override fun close() {
         cleanup()
@@ -141,6 +141,14 @@ open class State(
     fun cleanup() {
         for ((hash, ref) in scriptRefs) {
             scriptRefs.remove(hash)
+            lua.run {
+                getref(ref)
+                unref(ref)
+                pop(1)
+            }
+        }
+        for (ref in threadRefs) {
+            threadRefs.remove(ref)
             lua.run {
                 getref(ref)
                 unref(ref)
