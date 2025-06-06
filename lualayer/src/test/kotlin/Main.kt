@@ -4,6 +4,7 @@ import evo.lualayer.annotations.LuauFunction
 import evo.lualayer.generated.SyntheticLuauLibs
 import evo.lualayer.setup.LuauConfig
 import evo.lualayer.runSandboxed
+import evo.lualayer.wrapper.LuauThread
 import evo.lualayer.wrapper.State
 import net.hollowcube.luau.internal.vm.lua_h
 
@@ -40,19 +41,19 @@ fun main(args: Array<String>) {
                 """.trimIndent()
         val compiled = config.compiler.compile(test)
 
-        state.newThread().runSandboxed { thread ->
-            var i = 0
-            try {
-                repeat(10000) {
+        var i = 0
+        try {
+            repeat(100) {
+                state.newThread().runSandboxed { thread ->
                     i = it
                     val script = thread.load("test$it.luau", compiled)
                     script.run()
                 }
-            } catch (e: Exception) {
-                throw e
-            } finally {
-                log("last index: $i", LogType.INFORMATION)
             }
+        } catch (e: Exception) {
+            throw e
+        } finally {
+            log("last index: $i", LogType.INFORMATION)
         }
     }
 }

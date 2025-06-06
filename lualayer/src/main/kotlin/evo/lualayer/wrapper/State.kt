@@ -133,28 +133,32 @@ open class State(
     var threadRefs = mutableSetOf<Int>()
 
     override fun close() {
-        cleanup()
+        cleanupScripts()
+        cleanupThreads()
         lua.close()
         log("Lua state closed", LogType.DEBUG)
     }
 
-    fun cleanup() {
-        for ((hash, ref) in scriptRefs) {
-            scriptRefs.remove(hash)
+    fun cleanupScripts() {
+        for ((_, ref) in scriptRefs) {
             lua.run {
                 getref(ref)
                 unref(ref)
                 pop(1)
             }
         }
+        scriptRefs.clear()
+    }
+
+    fun cleanupThreads() {
         for (ref in threadRefs) {
-            threadRefs.remove(ref)
             lua.run {
                 getref(ref)
                 unref(ref)
-                pop(1)
+                pop(2)
             }
         }
+        threadRefs.clear()
     }
 
     /**

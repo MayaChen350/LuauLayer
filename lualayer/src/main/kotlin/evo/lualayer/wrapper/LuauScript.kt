@@ -25,11 +25,14 @@ class LuauScript(val state: State, name: String, bytecode: ByteArray, val config
     var results: Int = 0
 
     init {
-        val hash = bytecode.contentHashCode()
+        val hash = name.hashCode() + bytecode.contentHashCode()
         if (state.scriptRefs.containsKey(hash)) {
-            log("Script with hash $hash already loaded, reusing existing reference", LogType.DEBUG)
+            if (config.debug) log("Script with hash $hash already loaded, reusing existing reference", LogType.DEBUG)
             ref = state.scriptRefs[hash] ?: throw IllegalStateException("Script reference not found")
         } else {
+            require(state.lua.checkStack(2)) {
+                throw RuntimeException("Lua stack overflow: insufficient stack space to load script")
+            }
             state.lua.load(name, bytecode)
             ref = state.createRef()
             state.scriptRefs[hash] = ref
@@ -42,15 +45,18 @@ class LuauScript(val state: State, name: String, bytecode: ByteArray, val config
      * @return The status of the script execution, either `LuaStatus.OK` or `LuaStatus.ERRRUN`.
      */
     fun run(): LuaStatus = try {
-        log("Running script with ref: <bold>$ref", LogType.DEBUG)
+        if (config.debug) log("Running script with ref: <bold>$ref", LogType.DEBUG)
         lua.getref(ref)
         lua.pcall(0, 0)
         LuaStatus.OK
     } catch (e: Exception) {
         log("Error running script: ${lua.toString(-1)}", LogType.ERROR)
+        lua.pop(1)
         if (!e.message.isNullOrEmpty()) {
             e.printStackTrace()
         }
         LuaStatus.ERRRUN // TODO: more specific error handling
+    } finally {
+        //lua.pop(1) // TODO: manage this automatically, rn we can have 8k-ish scripts loaded at once, if we pop we will lose the reference
     }
 }

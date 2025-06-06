@@ -2,7 +2,6 @@ package evo.lualayer.wrapper
 
 import cz.lukynka.prettylog.LogType
 import cz.lukynka.prettylog.log
-import evo.lualayer.absRef
 import evo.lualayer.setup.LuauConfig
 import net.hollowcube.luau.LuaState
 import net.hollowcube.luau.LuaType
@@ -12,7 +11,7 @@ class LuauThread( // TODO: look into pushThread()
     private val parent: LuaState
 ) : State(
     config = config,
-    lua = parent.newThread()
+    lua = parent.newThread() // lua = parent.apply { checkStack(2) }.newThread()
 ) {
     constructor(parent: WrappedLuauState) : this(
         config = parent.config,
@@ -23,7 +22,7 @@ class LuauThread( // TODO: look into pushThread()
 
     init {
         require(parent.type(-1) == LuaType.THREAD) {
-            "Parent Lua state must be a thread, but got ${parent.type(-1)}"
+            "Object on stack must be a thread, got: ${parent.typeName(-1)}"
         }
         ref = parent.ref(-1)
         super.threadRefs.add(ref)
@@ -31,7 +30,11 @@ class LuauThread( // TODO: look into pushThread()
 
     override fun close() {
         lua.top = 0
-        super.cleanup()
+        parent.run {
+            getref(ref)
+            unref(ref)
+            pop(2)
+        }
     }
 
     /**
