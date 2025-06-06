@@ -31,9 +31,7 @@ class LuauScript(val state: State, name: String, bytecode: ByteArray, val config
             if (config.debug) log("Script with hash $hash already loaded, reusing existing reference", LogType.DEBUG)
             ref = state.scriptRefs[hash] ?: throw IllegalStateException("Script reference not found")
         } else {
-            require(state.lua.checkStack(2)) {
-                throw RuntimeException("Lua stack overflow: insufficient stack space to load script")
-            }
+            check(state.lua.checkStack(2)) { "Insufficient stack space to load script" }
             state.lua.load(name, bytecode)
             ref = state.createRef()
             state.scriptRefs[hash] = ref
@@ -65,7 +63,7 @@ class LuauScript(val state: State, name: String, bytecode: ByteArray, val config
     * */
     fun runOnce(): LuaStatus { // TODO: return values
         return run().also {
-            require(lua.type(-1) == LuaType.FUNCTION) {
+            check(lua.type(-1) == LuaType.FUNCTION) {
                 "Expected a function on the stack, got: ${lua.typeName(-1)}"
             }
             state.scriptRefs.remove(ref)

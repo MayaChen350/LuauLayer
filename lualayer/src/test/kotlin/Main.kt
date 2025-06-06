@@ -18,7 +18,7 @@ val config = LuauConfig(
 
 @LuauFunction(lib = "misc")
 fun foo(bool: Boolean): String {
-    return "Foo returned: $bool"
+    return "Foo: $bool"
 }
 
 @LuauFunction // not specifying a namespace means it will be added to the global namespace
@@ -45,10 +45,10 @@ fun main(args: Array<String>) {
         try {
             measureTime {
                 state.spawn { thread ->
-                    repeat(1) {
+                    repeat(10000) {
                         i = it
                         val script = thread.load("test$it.luau", compiled)
-                        script.runOnce()
+                        script.run()
                     }
                 }
             }.apply {

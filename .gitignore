@@ -48,3 +48,4 @@ bin/
 /*.log
 /libs/
 /.idea/.*
+/.idea/
