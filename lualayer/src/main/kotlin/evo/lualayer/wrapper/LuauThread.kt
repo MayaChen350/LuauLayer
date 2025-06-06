@@ -30,6 +30,7 @@ class LuauThread( // TODO: look into pushThread()
     }
 
     override fun close() {
+        lua.top = 0
         super.cleanup()
     }
 

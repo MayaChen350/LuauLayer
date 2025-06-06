@@ -8,4 +8,5 @@ class LuauConfig(
     val paths: Set<String> = setOf("run/scripts"),
     val compiler: LuauCompiler = Compilers.DEBUG,
     val libs: Set<LuauLib> = emptySet(),
+    val debug: Boolean = false
 )

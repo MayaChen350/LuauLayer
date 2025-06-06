@@ -1,14 +1,18 @@
+import cz.lukynka.prettylog.LogType
+import cz.lukynka.prettylog.log
 import evo.lualayer.annotations.LuauFunction
 import evo.lualayer.generated.SyntheticLuauLibs
 import evo.lualayer.setup.LuauConfig
 import evo.lualayer.runSandboxed
 import evo.lualayer.wrapper.State
+import net.hollowcube.luau.internal.vm.lua_h
 
 val config = LuauConfig(
     paths = setOf(
         "lualayer/src/test/resources"
     ),
-    libs = SyntheticLuauLibs.ALL  // or use setOf(SyntheticLuauLibs.MISC, SyntheticLuauLibs.FOO) if you want specific libs
+    libs = SyntheticLuauLibs.ALL,  // or use setOf(SyntheticLuauLibs.MISC, SyntheticLuauLibs.FOO) if you want specific libs
+    debug = false
 )
 
 @LuauFunction(lib = "misc")
@@ -32,15 +36,23 @@ object Object {
 fun main(args: Array<String>) {
     State(config = config).addLibs(config.libs).runSandboxed { state ->
         val test = """
-                    print(misc.foo(false)) -- Should print: Foo returned: false            
-                    local l = fibonacci(15) * 10
-                    print(l) -- Should print: 6100
+                    fibonacci(2)
                 """.trimIndent()
         val compiled = config.compiler.compile(test)
 
         state.newThread().runSandboxed { thread ->
-            val script = thread.load("test.luau", compiled)
-            script.run()
+            var i = 0
+            try {
+                repeat(10000) {
+                    i = it
+                    val script = thread.load("test$it.luau", compiled)
+                    script.run()
+                }
+            } catch (e: Exception) {
+                throw e
+            } finally {
+                log("last index: $i", LogType.INFORMATION)
+            }
         }
     }
 }
