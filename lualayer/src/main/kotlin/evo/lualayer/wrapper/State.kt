@@ -25,7 +25,7 @@ open class State(
      * A Lua function for requiring modules. Searches for the module in the global scope
      * or loads it from the configured paths.
      */
-    val require = LuaFunc { state: LuaState -> // TODO: move out of here
+    private val require = LuaFunc { state: LuaState -> // TODO: migrate to @LuaFunction
         val moduleName = state.checkStringArg(1)
         log("Requiring module: $moduleName", LogType.DEBUG)
 
@@ -94,7 +94,7 @@ open class State(
         return load(name, bytecode)
     }
 
-    open fun initialize() {
+    protected open fun initialize() {
         addLibs(config.libs)
     }
 
@@ -105,24 +105,26 @@ open class State(
      * @return The current `State` instance.
      */
     open fun addLibs(libs: Set<LuauLib>): State {
-        openLibs()
+        lua.openLibs()
         addGlobal("require", require)
+        log("Adding libraries: ${libs.joinToString(", ") { it.name }}", LogType.DEBUG)
         libs.forEach { lib ->
             if (lib.functions.isEmpty()) {
                 log("Library ${lib.name} has no functions to register", LogType.WARNING)
                 return@forEach
             }
-            log("Registering library: ${lib.name}", LogType.DEBUG)
             if (lib.isGlobal) {
-                for ((name, func) in lib.functions) {
-                    lua.pushCFunction(func, name)
-                    lua.setGlobal(name)
-                }
+                lib.functions.forEach(::addGlobal)
             } else {
                 lua.registerLib(lib.name, lib.functions)
             }
         }
         return this
+    }
+
+    private fun addGlobal(name: String, func: LuaFunc) {
+        lua.pushCFunction(func, name)
+        lua.setGlobal(name)
     }
 
     override fun sandbox() {
@@ -138,16 +140,18 @@ open class State(
     }
 
     val scriptRefs = ConcurrentHashMap<Int, Int>() // maybe I should generalize memory management
-    var threadRefs = mutableSetOf<Int>()
+    protected var threadRefs = mutableSetOf<Int>()
 
     override fun close() {
+        val stacktrace = Thread.currentThread().stackTrace.drop(2).joinToString("\n") { "  at ${it.className}.${it.methodName}(${it.fileName}:${it.lineNumber})" }
+        log("Closing Lua state with stacktrace:\n$stacktrace", LogType.DEBUG)
         cleanupScripts()
         cleanupThreads()
         lua.close()
         log("Lua state closed", LogType.DEBUG)
     }
 
-    fun cleanupScripts() {
+    protected fun cleanupScripts() {
         for ((_, ref) in scriptRefs) {
             lua.run {
                 getref(ref)
@@ -158,7 +162,7 @@ open class State(
         scriptRefs.clear()
     }
 
-    fun cleanupThreads() {
+    protected fun cleanupThreads() {
         for (ref in threadRefs) {
             lua.run {
                 getref(ref)

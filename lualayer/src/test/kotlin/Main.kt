@@ -2,18 +2,18 @@ import cz.lukynka.prettylog.LogType
 import cz.lukynka.prettylog.log
 import evo.lualayer.annotations.LuauFunction
 import evo.lualayer.generated.SyntheticLuauLibs
-import evo.lualayer.setup.LuauConfig
 import evo.lualayer.runSandboxed
-import evo.lualayer.wrapper.LuauThread
+import evo.lualayer.setup.LuauConfig
+import evo.lualayer.spawn
 import evo.lualayer.wrapper.State
-import net.hollowcube.luau.internal.vm.lua_h
+import kotlin.time.measureTime
 
 val config = LuauConfig(
     paths = setOf(
         "lualayer/src/test/resources"
     ),
     libs = SyntheticLuauLibs.ALL,  // or use setOf(SyntheticLuauLibs.MISC, SyntheticLuauLibs.FOO) if you want specific libs
-    debug = false
+    debug = true
 )
 
 @LuauFunction(lib = "misc")
@@ -37,18 +37,22 @@ object Object {
 fun main(args: Array<String>) {
     State(config = config).runSandboxed { state ->
         val test = """
-                    fibonacci(2)
+                    fibonacci(11)
                 """.trimIndent()
         val compiled = config.compiler.compile(test)
 
         var i = 0
         try {
-            state.newThread().runSandboxed { thread ->
-                repeat(2) {
-                    i = it
-                    val script = thread.load("test$it.luau", compiled)
-                    script.run()
+            measureTime {
+                state.spawn { thread ->
+                    repeat(1) {
+                        i = it
+                        val script = thread.load("test$it.luau", compiled)
+                        script.runOnce()
+                    }
                 }
+            }.apply {
+                log("Execution took: $this", LogType.INFORMATION)
             }
         } catch (e: Exception) {
             throw e

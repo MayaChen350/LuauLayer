@@ -9,6 +9,7 @@ import net.hollowcube.luau.LuaState
  * Interface representing a wrapper for a Lua state, providing utility methods
  * to interact with and manage the Lua environment.
  */
+@Deprecated("Trying to get rid of this interface, use State instead")
 interface WrappedLuauState {
     /**
      * The Lua state instance being wrapped.
@@ -20,10 +21,6 @@ interface WrappedLuauState {
      */
     val config: LuauConfig
 
-    /**
-     * Builtin Libraries
-     */
-    fun openLibs() = lua.openLibs()
 
     /**
      * Sandboxes the Lua state, restricting it from modifying the environment.
@@ -44,17 +41,6 @@ interface WrappedLuauState {
     }
 
     fun close()
-
-    /**
-     * Adds a global Lua function to the Lua state.
-     *
-     * @param name The name of the global function.
-     * @param func The Lua function to add.
-     */
-    fun addGlobal(name: String, func: LuaFunc) {
-        lua.pushCFunction(func, name)
-        lua.setGlobal(name)
-    }
 
     fun createRef(i: Int = -1): Int {
         return lua.absRef(i)

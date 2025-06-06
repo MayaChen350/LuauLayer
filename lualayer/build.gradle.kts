@@ -15,14 +15,17 @@ dependencies {
     implementation(libs.bundles.kotlinx)
     implementation(files("libs/luau-natives-windows-x64-dev.jar"))
 
-    implementation(project(":annotations"))
+    api(project(":annotations"))
 }
 
 kotlin {
     jvmToolchain(21)
 
     sourceSets.main {
-        kotlin.srcDir(layout.buildDirectory.dir("generated/ksp/main/kotlin"))
+        kotlin {
+            srcDir("src/main/kotlin")
+            srcDir(layout.buildDirectory.dir("generated/ksp/main/kotlin"))
+        }
     }
 
     compilerOptions {
