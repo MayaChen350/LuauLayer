@@ -61,6 +61,10 @@ open class State(
         1
     }
 
+    init {
+        initialize()
+    }
+
     /**
      * Loads a Lua script from a file and compiles it into bytecode.
      *
@@ -90,13 +94,17 @@ open class State(
         return load(name, bytecode)
     }
 
+    open fun initialize() {
+        addLibs(config.libs)
+    }
+
     /**
      * Adds libraries to the Lua state and initializes them.
      *
      * @param libs A set of libraries to add.
      * @return The current `State` instance.
      */
-    fun addLibs(libs: Set<LuauLib>): State {
+    open fun addLibs(libs: Set<LuauLib>): State {
         openLibs()
         addGlobal("require", require)
         libs.forEach { lib ->
@@ -144,7 +152,7 @@ open class State(
             lua.run {
                 getref(ref)
                 unref(ref)
-                pop(1)
+                pop(2)
             }
         }
         scriptRefs.clear()

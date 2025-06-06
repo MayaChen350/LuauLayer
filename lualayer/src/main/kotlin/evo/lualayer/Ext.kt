@@ -7,7 +7,7 @@ fun LuaState.absRef(i: Int = -1): Int {
     return ref(absIndex(i))
 }
 
-fun <T : State, R> T.runSandboxed(block: (State) -> R): R {
+fun <T : State, R> T.runSandboxed(block: (T) -> R): R {
     try {
         sandbox()
         return block(this)

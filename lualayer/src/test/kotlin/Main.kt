@@ -35,7 +35,7 @@ object Object {
 }
 
 fun main(args: Array<String>) {
-    State(config = config).addLibs(config.libs).runSandboxed { state ->
+    State(config = config).runSandboxed { state ->
         val test = """
                     fibonacci(2)
                 """.trimIndent()
@@ -43,8 +43,8 @@ fun main(args: Array<String>) {
 
         var i = 0
         try {
-            repeat(100) {
-                state.newThread().runSandboxed { thread ->
+            state.newThread().runSandboxed { thread ->
+                repeat(2) {
                     i = it
                     val script = thread.load("test$it.luau", compiled)
                     script.run()

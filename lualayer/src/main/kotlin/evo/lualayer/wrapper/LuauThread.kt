@@ -13,7 +13,7 @@ class LuauThread( // TODO: look into pushThread()
     config = config,
     lua = parent.newThread() // lua = parent.apply { checkStack(2) }.newThread()
 ) {
-    constructor(parent: WrappedLuauState) : this(
+    constructor(parent: State) : this(
         config = parent.config,
         parent = parent.lua
     )
@@ -35,6 +35,13 @@ class LuauThread( // TODO: look into pushThread()
             unref(ref)
             pop(2)
         }
+    }
+
+    override fun initialize() = Unit /* no-op */
+
+    override fun addLibs(libs: Set<LuauLib>): State {
+        log("Cannot add libraries to a thread, use the parent state instead", LogType.WARNING)
+        return this
     }
 
     /**
