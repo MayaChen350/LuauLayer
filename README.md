@@ -9,12 +9,13 @@ val config = LuauConfig(
     paths = setOf(
         "lualayer/src/test/resources"
     ),
-    libs = SyntheticLuauLibs.ALL  // or use setOf(SyntheticLuauLibs.MISC, SyntheticLuauLibs.FOO) if you want specific libs
+    libs = SyntheticLuauLibs.ALL,  // or use setOf(SyntheticLuauLibs.MISC, SyntheticLuauLibs.FOO) if you want specific libs
+    debug = false
 )
 
 @LuauFunction(lib = "misc")
 fun foo(bool: Boolean): String {
-    return "Foo returned: $bool"
+    return "Foo: $bool"
 }
 
 @LuauFunction // not specifying a namespace means it will be added to the global namespace
@@ -31,15 +32,28 @@ object Object {
 }
 
 fun main(args: Array<String>) {
-    State(config = config).addLibs(config.libs).runSandboxed { state ->
-        val test = """
-                    print(misc.foo(false)) -- Should print: Foo returned: false            
-                    local l = fibonacci(15) * 10
-                    print(l) -- Should print: 6100
-                """.trimIndent()
-        val compiled = config.compiler.compile(test)
+    val state = State(config = config)
 
-        state.newThread().runSandboxed { thread ->
+    runBlocking {
+        var count = 0
+        tickerFlow(2.seconds)
+            .onEach {
+                state.callEvent(ChatMessageEvent("Bing bong"))
+                if (count++ > 10) {
+                    state.lifecycle.value = LifecycleState.STOPPED
+                }
+            }
+            .launchIn(CoroutineScope(SupervisorJob() + Dispatchers.Default))
+
+        state.spawn(true) { thread ->
+            val test = """
+                          print("Hello from Lua!")
+                          function events.chat_message_event(msg)
+                            return msg .. " @ " .. os.date("%H:%M:%S")
+                          end
+                      """.trimIndent()
+            val compiled = config.compiler.compile(test)
+
             val script = thread.load("test.luau", compiled)
             script.run()
         }
