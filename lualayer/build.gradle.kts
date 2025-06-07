@@ -29,8 +29,8 @@ kotlin {
     }
 
     compilerOptions {
-        freeCompilerArgs.addAll("-Xnon-local-break-continue", "-Xmulti-dollar-interpolation")
-        extraWarnings.set(true)
+        freeCompilerArgs.addAll("-Xnon-local-break-continue", "-Xmulti-dollar-interpolation", "-Xcontext-parameters")
+        //extraWarnings.set(true)
     }
 }
 

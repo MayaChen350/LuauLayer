@@ -5,6 +5,7 @@ kotlinx-serialization = "1.8.1"
 kotlinx-datetime = "0.6.2"
 kotlin = "2.1.21"
 kotlinx-serialization-plugin = "2.1.21"
+kotlinx-coroutines = "1.10.2"
 okio = "3.10.2"
 ksp = "2.1.21-2.0.1"
 kotlinpoet = "2.2.0"
@@ -20,6 +21,9 @@ prettylog-common = { module = "cz.lukynka:pretty-log-common", version.ref = "pre
 prettylog-jvm = { module = "cz.lukynka:pretty-log-jvm", version.ref = "prettylog" }
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-core-jvm = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm", version.ref = "kotlinx-coroutines" }
+
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
@@ -34,6 +38,8 @@ prettylog = [
 ]
 kotlinx = [
     "kotlinx-datetime",
+    "kotlinx-coroutines-core",
+    "kotlinx-coroutines-core-jvm",
 ]
 kotlinpoet = [
     "kotlinpoet",

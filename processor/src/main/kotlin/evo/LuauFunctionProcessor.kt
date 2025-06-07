@@ -142,15 +142,15 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
                     }
                 }
                 lambdaBody.addStatement(statement)
-                lambdaBody.addStatement("return@LuaFunc 1")
+                lambdaBody.addStatement("return@preallocate 1")
             } else {
-                lambdaBody.addStatement("return@LuaFunc 0")
+                lambdaBody.addStatement("return@preallocate 0")
             }
 
             val VAR_LUA_FUNC = PropertySpec.builder(
                 internalFunctionName, luaFuncClassName
             ).initializer(
-                CodeBlock.builder().beginControlFlow("%T { state: %T ->", luaFuncClassName, luaStateClassName)
+                CodeBlock.builder().beginControlFlow("%T.preallocate { state: %T ->", luaFuncClassName, luaStateClassName)
                     .add(lambdaBody.build())
                     .endControlFlow().build()
             ).build()
