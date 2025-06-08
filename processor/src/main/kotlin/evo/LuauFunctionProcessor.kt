@@ -173,14 +173,14 @@ class LuauFunctionProcessor(val codeGenerator: CodeGenerator, val logger: KSPLog
                     }
                 }
             }
-            mapBuilder.addStatement("),")
+            mapBuilder.addStatement(")")
 
             val libInitializer = CodeBlock.builder()
                 .addStatement("%T(", luauLibType)
                 .indent()
                 .add("%S, ", libName.lowercase())
                 .add("%L", mapBuilder.build())
-                .addStatement((libName.lowercase() == "global").toString())
+                //.addStatement((libName.lowercase() == "global").toString())
                 .unindent()
                 .addStatement(")")
                 .build()

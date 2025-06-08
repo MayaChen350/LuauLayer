@@ -1,3 +1,5 @@
+import cz.lukynka.prettylog.LogType
+import cz.lukynka.prettylog.log
 import evo.lualayer.annotations.LuauFunction
 import evo.lualayer.generated.SyntheticLuauLibs
 import evo.lualayer.lifecycle.ChatMessageEvent
@@ -40,6 +42,11 @@ object Object {
     }
 }
 
+@LuauFunction
+fun print(msg: String) {
+    log(msg, LogType.USER_ACTION)
+}
+
 fun main(args: Array<String>) {
     val state = State(config = config)
 
@@ -48,7 +55,7 @@ fun main(args: Array<String>) {
         tickerFlow(2.seconds)
             .onEach {
                 state.callEvent(ChatMessageEvent("Bing bong"))
-                if (count++ > 10) {
+                if (count++ > 3) {
                     state.lifecycle.value = LifecycleState.STOPPED
                 }
             }

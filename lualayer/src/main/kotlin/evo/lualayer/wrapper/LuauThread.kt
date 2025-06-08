@@ -53,7 +53,7 @@ class LuauThread( // TODO: look into pushThread()
             sandboxed = true
             lua.getGlobal("events")
             lua.setReadOnly(-1, false)
-            lua.pop(2)
+            lua.pop(1)
         } else {
             log("Thread is already sandboxed", LogType.WARNING)
         }
