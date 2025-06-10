@@ -8,12 +8,10 @@ import evo.lualayer.setup.LuauConfig
 import evo.lualayer.spawn
 import evo.lualayer.tickerFlow
 import evo.lualayer.wrapper.State
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.seconds
 
 val config = LuauConfig(
@@ -47,32 +45,37 @@ fun print(msg: String) {
     log(msg, LogType.USER_ACTION)
 }
 
+val Dispatchers.LOOM: CoroutineDispatcher
+    get() = Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
+
 fun main(args: Array<String>) {
     val state = State(config = config)
 
     runBlocking {
         var count = 0
-        tickerFlow(2.seconds)
-            .onEach {
-                state.callEvent(ChatMessageEvent("Bing bong"))
-                if (count++ > 3) {
-                    state.lifecycle.value = LifecycleState.STOPPED
-                }
-            }
-            .launchIn(CoroutineScope(SupervisorJob() + Dispatchers.Default))
-
-        state.spawn(true) { thread ->
+        state.spawn {
             val test = """
                           print("Hello from Lua!")
-                          function events.chat_message_event(msg)
+                          function events.chat_message(msg)
                             return msg .. " @ " .. os.date("%H:%M:%S")
                           end
                       """.trimIndent()
             val compiled = config.compiler.compile(test)
+
+            tickerFlow(1.seconds)
+                .onEach {
+                    if (count != 0) state.dispatchEvent(ChatMessageEvent("Bing bong"))
+                    if (count++ > 5) {
+                        log("Stopping Lua state", LogType.DEBUG)
+                        state.lifecycle.value = LifecycleState.STOPPED
+                    }
+                }
+                .launchIn(CoroutineScope(SupervisorJob() + Dispatchers.LOOM))
 
             val script = thread.load("test.luau", compiled)
             script.run()
         }
     }
 }
+
 

@@ -2,7 +2,7 @@ package evo.lualayer.wrapper
 
 import cz.lukynka.prettylog.LogType
 import cz.lukynka.prettylog.log
-import evo.lualayer.dumpStack
+import evo.lualayer.absRef
 import evo.lualayer.lifecycle.Event
 import evo.lualayer.lifecycle.LifecycleState
 import evo.lualayer.setup.LuauConfig
@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
 import java.io.File
+import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -19,29 +20,45 @@ import java.util.concurrent.ConcurrentHashMap
  * @property lua The Lua state instance being wrapped.
  */
 open class State(
-    override var config: LuauConfig,
-    override val lua: LuaState = LuaState.newState(),
-) : WrappedLuauState, AutoCloseable {
+    var config: LuauConfig,
+    open val lua: LuaState = LuaState.newState(),
+) : /*WrappedLuauState,*/ AutoCloseable {
     var sandboxed = false
         internal set
 
-    val lifecycle = MutableStateFlow(LifecycleState.RUNNING)
+    open val lifecycle = MutableStateFlow(LifecycleState.RUNNING)
     // val eventHandlers = ConcurrentHashMap<String, Int>()
+    internal val scriptRefs = ConcurrentHashMap<Int, Int>()
+    internal var threads = mutableSetOf<WeakReference<LuauThread>>()
 
-    fun setupEventTable() {
+    private fun setupEventTable() {
         lua.newMetaTable("events")
         lua.setGlobal("events")
         log("Initialized Lua state with global 'events' table", LogType.DEBUG)
     }
 
-    fun callEvent(
-        event: Event
-    ): Any? {
-        log("Calling event: $event", LogType.DEBUG)
-        lua.getGlobal("events") // TODO: abstract globals
+    open fun dispatchEvent(event: Event): Any? {
+        if (threads.isEmpty()) {
+            callEvent(event)
+        } else {
+            for (thread in threads) {
+                thread.get()?.callEvent(event) ?: run {
+                    log("Thread ${thread.get()} is null, skipping event dispatch", LogType.WARNING)
+                }
+            }
+        }
+        return null
+    }
+
+    fun callEvent(event: Event): Any? {
+        //lua.getref(thread)
+        //val thread = lua.toThread(-1)
+        log("Calling event: ${event.name} on $this", LogType.DEBUG)
+        lua.getGlobal("events")
+        //lua.xPush(thread.lua, -1)
         if (lua.isNil(-1)) {
-            lua.pop(1) // pop?
-            log("Events table does not exist, cannot call event: $event", LogType.WARNING)
+            lua.pop(1)
+            log("Events table does not exist, cannot call event: ${event.name}", LogType.WARNING)
             return null
         }
         lua.getField(-1, event.name) // get events[eventName]
@@ -53,9 +70,13 @@ open class State(
 
         val args = event.apply(this)
         val results = 1
-        pcall(args, results)
+        try {
+            lua.pcall(args, results)
+        } catch (e: Exception) {
+            log(e)
+        }
 
-        lua.dumpStack()
+        //lua.dumpStack()
         if (lua.isNil(-1)) {
             log("Event $event returned nil", LogType.WARNING)
             lua.pop(2)
@@ -64,7 +85,7 @@ open class State(
         val result = lua.toString(-1)
         lua.pop(1 + results)
         log("Event $event returned: $result", LogType.DEBUG)
-
+        //thread.pop(1)
         return result
     }
 
@@ -146,13 +167,7 @@ open class State(
         addLibs(config.libs)
     }
 
-    /**
-     * Adds libraries to the Lua state and initializes them.
-     *
-     * @param libs A set of libraries to add.
-     * @return The current `State` instance.
-     */
-    open fun addLibs(libs: Set<LuauLib>): State {
+    private fun addLibs(libs: Set<LuauLib>): State {
         lua.openLibs()
         addGlobal("require", require)
         log("Adding libraries: ${libs.joinToString(", ") { it.name }}", LogType.DEBUG)
@@ -175,7 +190,7 @@ open class State(
         lua.setGlobal(name)
     }
 
-    override fun sandbox() {
+    open fun sandbox() {
         if (!sandboxed) {
             lua.sandbox()
             sandboxed = true
@@ -183,9 +198,6 @@ open class State(
             log("State is already sandboxed", LogType.WARNING)
         }
     }
-
-    internal val scriptRefs = ConcurrentHashMap<Int, Int>() // maybe I should generalize memory management
-    protected var threadRefs = mutableSetOf<Int>()
 
     override fun close() {
         cleanupScripts()
@@ -206,14 +218,10 @@ open class State(
     }
 
     protected fun cleanupThreads() {
-        for (ref in threadRefs) {
-            lua.run {
-                getref(ref)
-                unref(ref)
-                pop(2)
-            }
+        for (thread in threads) {
+            thread.get()?.close()
         }
-        threadRefs.clear()
+        threads.clear()
     }
 
     /**
@@ -230,5 +238,13 @@ open class State(
             bytecode = bytecode,
             config = config
         )
+    }
+
+    fun createRef(i: Int = -1): Int {
+        return lua.absRef(i)
+    }
+
+    override fun toString(): String {
+        return "State#${this.hashCode().toString(16)}(sandboxed=$sandboxed, lifecycle=${lifecycle.value}, scriptRefs=${scriptRefs.size}, threads=${threads.size})"
     }
 }

@@ -8,7 +8,7 @@ abstract class Event(val name: String) {
 
 data class ChatMessageEvent(
     val message: String
-) : Event("chat_message_event") {
+) : Event("chat_message") {
     override fun apply(state: State): Int {
         state.lua.pushString(message)
         return 1

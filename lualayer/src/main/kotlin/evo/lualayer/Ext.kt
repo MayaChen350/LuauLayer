@@ -51,16 +51,16 @@ inline fun <T : State, R> T.runSandboxed(block: (T) -> R): R {
 }
 
 @OptIn(ExperimentalContracts::class)
-suspend fun <R> State.spawn(sandbox: Boolean = true, block: (LuauThread) -> R): LuauThread {
+suspend inline fun <R> State.spawn(sandbox: Boolean = true, block: (LuauThread) -> R) {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
     if (!sandboxed && sandbox) sandbox()
-    LuauThread(this@spawn).use { thread ->
+    LuauThread(this).use { thread ->
+        log("Spawning thread: $thread", LogType.DEBUG)
         if (sandbox) thread.sandbox()
         block(thread)
-        this@spawn.lifecycle.conditionalAwait { it == LifecycleState.STOPPED }
-        return thread
+        lifecycle.conditionalAwait { it == LifecycleState.STOPPED }
     }
 }
 

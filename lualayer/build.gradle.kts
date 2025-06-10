@@ -13,13 +13,13 @@ dependencies {
     implementation(libs.okio)
     implementation(libs.bundles.prettylog)
     implementation(libs.bundles.kotlinx)
-    implementation(files("libs/luau-natives-windows-x64-dev.jar"))
+    implementation(files("libs/luau-natives-windows-x64-${libs.versions.luau.get()}.jar"))
 
     api(project(":annotations"))
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(23)
 
     sourceSets.main {
         kotlin {
@@ -36,13 +36,13 @@ kotlin {
 
 java {
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_23
+    targetCompatibility = JavaVersion.VERSION_23
 }
 
 tasks {
     compileJava {
-        options.release.set(21)
+        options.release.set(23)
         options.encoding = "UTF-8"
 
         options.compilerArgs.addAll(

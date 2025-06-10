@@ -41,7 +41,7 @@ class LuauScript(val state: State, name: String, bytecode: ByteArray, val config
     /**
      * Executes the Lua script in the Lua state.
      *
-     * @return The status of the script execution, either `LuaStatus.OK` or `LuaStatus.ERRRUN`.
+     * @return {@link } indicating the result of the execution.
      */
     fun run(): LuaStatus = try { // TODO: return values
         if (config.debug) log("Running script with ref: <bold>$ref", LogType.DEBUG)
@@ -54,7 +54,7 @@ class LuauScript(val state: State, name: String, bytecode: ByteArray, val config
         if (!e.message.isNullOrEmpty()) {
             e.printStackTrace()
         }
-        LuaStatus.ERRRUN // TODO: more specific error handling
+        if (lua.status() == LuaStatus.OK) LuaStatus.ERRRUN else lua.status() // TODO: more specific error handling
     } finally {
         //lua.pop(1) // TODO: manage this automatically, rn we can have 8k-ish scripts loaded at once, if we pop we will lose the reference
     }

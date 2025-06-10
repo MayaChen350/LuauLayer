@@ -2,35 +2,27 @@ package evo.lualayer.wrapper
 
 import cz.lukynka.prettylog.LogType
 import cz.lukynka.prettylog.log
-import evo.lualayer.setup.LuauConfig
 import net.hollowcube.luau.LuaState
 import net.hollowcube.luau.LuaType
+import java.lang.ref.WeakReference
 
-class LuauThread( // TODO: look into pushThread()
-    override var config: LuauConfig,
-    private val parent: LuaState
-) : State(
-    config = config,
-    lua = parent.newThread() // lua = parent.apply { checkStack(2) }.newThread()
-) {
-    constructor(parent: State) : this(
-        config = parent.config,
-        parent = parent.lua
-    )
+class LuauThread(val parent: State): State(parent.config, parent.lua) {
 
+    override val lua: LuaState = parent.lua.newThread()
+    override val lifecycle = parent.lifecycle
     val ref: Int
 
     init {
-        require(parent.type(-1) == LuaType.THREAD) {
-            "Object on stack must be a thread, got: ${parent.typeName(-1)}"
+        require(parent.lua.type(-1) == LuaType.THREAD) {
+            "Object on stack must be a thread, got: ${parent.lua.typeName(-1)}"
         }
-        ref = parent.ref(-1)
-        super.threadRefs.add(ref)
+        ref = parent.lua.ref(-1)
+        parent.threads.add(WeakReference(this))
     }
 
     override fun close() {
         lua.top = 0
-        parent.run {
+        parent.lua.run {
             getref(ref)
             unref(ref)
             pop(2)
@@ -39,15 +31,10 @@ class LuauThread( // TODO: look into pushThread()
 
     override fun initialize() = Unit /* no-op */
 
-    override fun addLibs(libs: Set<LuauLib>): State {
-        log("Cannot add libraries to a thread, use the parent state instead", LogType.WARNING)
-        return this
-    }
-
     /**
-     * Sandbox this thread
+     * Sandbox this thread (think it just sets __G and everything inside it to read-only)
      */
-    override fun sandbox() { // Holy fuck this has caused so many jvm crashes
+    override fun sandbox() {
         if (!sandboxed) {
             lua.sandboxThread()
             sandboxed = true
@@ -57,5 +44,9 @@ class LuauThread( // TODO: look into pushThread()
         } else {
             log("Thread is already sandboxed", LogType.WARNING)
         }
+    }
+
+    override fun toString(): String {
+        return "LuauThread#${this.hashCode().toString(16)}(parent=$parent) "
     }
 }
