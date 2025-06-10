@@ -1,8 +1,10 @@
 import cz.lukynka.prettylog.LogType
 import cz.lukynka.prettylog.log
+import evo.lualayer.LOOM
 import evo.lualayer.annotations.LuauFunction
 import evo.lualayer.generated.SyntheticLuauLibs
-import evo.lualayer.lifecycle.ChatMessageEvent
+import evo.lualayer.lifecycle.BingBongEvent
+import evo.lualayer.lifecycle.BloopEvent
 import evo.lualayer.lifecycle.LifecycleState
 import evo.lualayer.setup.LuauConfig
 import evo.lualayer.spawn
@@ -11,7 +13,6 @@ import evo.lualayer.wrapper.State
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.seconds
 
 val config = LuauConfig(
@@ -45,36 +46,36 @@ fun print(msg: String) {
     log(msg, LogType.USER_ACTION)
 }
 
-val Dispatchers.LOOM: CoroutineDispatcher
-    get() = Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher()
-
 fun main(args: Array<String>) {
     val state = State(config = config)
 
     runBlocking {
         var count = 0
-        state.spawn {
+        tickerFlow(1.seconds)
+            .onEach {
+                if (count != 0) state.dispatchEvent(BingBongEvent("Bing bong"))
+                if (count != 0) state.dispatchEvent(BloopEvent("Bloop!"))
+                if (count++ > 2) {
+                    log("Stopping Lua state", LogType.DEBUG)
+                    state.lifecycle.value = LifecycleState.STOPPED
+                }
+            }
+            .launchIn(CoroutineScope(SupervisorJob() + Dispatchers.LOOM))
+
+        state.spawn { thread ->
             val test = """
-                          print("Hello from Lua!")
-                          function events.chat_message(msg)
-                            return msg .. " @ " .. os.date("%H:%M:%S")
+                          print("Hello from 1!")
+                          function events.bing_bong(msg)
+                            return msg .. " @ " .. "BING"
                           end
                       """.trimIndent()
             val compiled = config.compiler.compile(test)
 
-            tickerFlow(1.seconds)
-                .onEach {
-                    if (count != 0) state.dispatchEvent(ChatMessageEvent("Bing bong"))
-                    if (count++ > 5) {
-                        log("Stopping Lua state", LogType.DEBUG)
-                        state.lifecycle.value = LifecycleState.STOPPED
-                    }
-                }
-                .launchIn(CoroutineScope(SupervisorJob() + Dispatchers.LOOM))
-
             val script = thread.load("test.luau", compiled)
             script.run()
         }
+        state.spawn { thread -> }
+        state.queue.awaitAll()
     }
 }
 

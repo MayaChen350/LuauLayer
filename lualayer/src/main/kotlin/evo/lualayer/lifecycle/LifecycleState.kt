@@ -1,5 +1,5 @@
 package evo.lualayer.lifecycle
 
 enum class LifecycleState {
-    RUNNING, SUSPENDED, STOPPED
+    RUNNING, BUSY, STOPPED
 }

@@ -6,12 +6,14 @@ import evo.lualayer.absRef
 import evo.lualayer.lifecycle.Event
 import evo.lualayer.lifecycle.LifecycleState
 import evo.lualayer.setup.LuauConfig
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import net.hollowcube.luau.LuaFunc
 import net.hollowcube.luau.LuaState
 import java.io.File
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * Represents a Lua state
@@ -31,23 +33,23 @@ open class State(
     internal val scriptRefs = ConcurrentHashMap<Int, Int>()
     internal var threads = mutableSetOf<WeakReference<LuauThread>>()
 
-    private fun setupEventTable() {
+    val queue = ConcurrentLinkedQueue<Deferred<LifecycleState>>()
+
+    private fun setupEventTable() { // TODO: make thread specific
         lua.newMetaTable("events")
         lua.setGlobal("events")
         log("Initialized Lua state with global 'events' table", LogType.DEBUG)
     }
 
-    open fun dispatchEvent(event: Event): Any? {
+    open fun dispatchEvent(event: Event) {
         if (threads.isEmpty()) {
             callEvent(event)
         } else {
             for (thread in threads) {
-                thread.get()?.callEvent(event) ?: run {
-                    log("Thread ${thread.get()} is null, skipping event dispatch", LogType.WARNING)
-                }
+                thread.get()?.callEvent(event)
             }
         }
-        return null
+        threads.removeAll { it.get() == null }
     }
 
     fun callEvent(event: Event): Any? {

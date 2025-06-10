@@ -6,9 +6,19 @@ import evo.lualayer.lifecycle.LifecycleState
 import evo.lualayer.lifecycle.conditionalAwait
 import evo.lualayer.wrapper.LuauThread
 import evo.lualayer.wrapper.State
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.newCoroutineContext
 import net.hollowcube.luau.LuaState
+import java.util.concurrent.Executors
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -50,18 +60,26 @@ inline fun <T : State, R> T.runSandboxed(block: (T) -> R): R {
     }
 }
 
-@OptIn(ExperimentalContracts::class)
-suspend inline fun <R> State.spawn(sandbox: Boolean = true, block: (LuauThread) -> R) {
-    contract {
-        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+val Dispatchers.LOOM: CoroutineDispatcher
+    get() = Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher().limitedParallelism(1)
+
+@OptIn(InternalCoroutinesApi::class)
+suspend fun <R> State.spawn(sandbox: Boolean = true, block: (LuauThread) -> R) {
+    if (lifecycle.value == LifecycleState.BUSY && queue.poll() != null) {
+        log("Awaiting for previous thread to finish spawning in coroutine context: $this", LogType.DEBUG)
+        lifecycle.conditionalAwait { it == LifecycleState.RUNNING }
+        log("Previous thread finished spawning, continuing with new thread", LogType.DEBUG)
     }
-    if (!sandboxed && sandbox) sandbox()
-    LuauThread(this).use { thread ->
-        log("Spawning thread: $thread", LogType.DEBUG)
+
+    val new: Deferred<LifecycleState> = CoroutineScope(Dispatchers.LOOM.newCoroutineContext(SupervisorJob())).async {
+        lifecycle.value = LifecycleState.BUSY
+        val thread = LuauThread(this@spawn)
         if (sandbox) thread.sandbox()
         block(thread)
+        lifecycle.value = LifecycleState.RUNNING
         lifecycle.conditionalAwait { it == LifecycleState.STOPPED }
     }
+    queue.add(new)
 }
 
 fun tickerFlow(period: Duration, initialDelay: Duration = Duration.ZERO) = flow {
