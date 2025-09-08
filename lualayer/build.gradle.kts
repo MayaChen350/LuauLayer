@@ -11,7 +11,7 @@ version = rootProject.version
 dependencies {
     ksp(project(":processor"))
 
-    implementation(libs.luau)
+    api(libs.luau)
     implementation(libs.okio)
     implementation(libs.bundles.prettylog)
     implementation(libs.bundles.kotlinx)
